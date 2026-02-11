@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install",
+  "installCommand": "npm install --install-strategy=nested",
   "buildCommand": "npm run build -w backend && npm run build -w frontend",
   "outputDirectory": "frontend/dist",
   "framework": null,
