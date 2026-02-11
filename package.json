@@ -13,5 +13,8 @@
   "workspaces": [
     "backend",
     "frontend"
-  ]
+  ],
+  "engines": {
+    "node": "20.x"
+  }
 }
