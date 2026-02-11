@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { PrismaClient } = require('@prisma/client');
-const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
 
 const { createClientsRouter } = require('./routes/clients');
 const { createFollowupsRouter } = require('./routes/followups');
@@ -10,8 +9,7 @@ const { createInteractionsRouter } = require('./routes/interactions');
 const { createIntelligenceRouter } = require('./routes/intelligence');
 
 const app = express();
-const adapter = new PrismaBetterSqlite3({ url: 'file:' + path.join(__dirname, '..', 'dev.db') });
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
