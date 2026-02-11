@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
 
 const { createClientsRouter } = require('./routes/clients');
 const { createFollowupsRouter } = require('./routes/followups');
@@ -8,8 +10,11 @@ const { createInteractionsRouter } = require('./routes/interactions');
 const { createIntelligenceRouter } = require('./routes/intelligence');
 
 // Singleton PrismaClient for serverless environments
-const prisma = globalThis.__prisma || new PrismaClient();
-if (process.env.NODE_ENV !== 'production') globalThis.__prisma = prisma;
+if (!globalThis.__prisma) {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  globalThis.__prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+}
+const prisma = globalThis.__prisma;
 
 const app = express();
 
