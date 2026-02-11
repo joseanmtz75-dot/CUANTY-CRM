@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 
 const { createClientsRouter } = require('./routes/clients');
@@ -8,15 +7,14 @@ const { createFollowupsRouter } = require('./routes/followups');
 const { createInteractionsRouter } = require('./routes/interactions');
 const { createIntelligenceRouter } = require('./routes/intelligence');
 
+// Singleton PrismaClient for serverless environments
+const prisma = globalThis.__prisma || new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalThis.__prisma = prisma;
+
 const app = express();
-const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-
-// Serve frontend static files in production
-const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');
-app.use(express.static(frontendDist));
 
 // Mount routers
 // Followups first (specific routes: /clients/today, /clients/suggestions, /clients/cleanup)
@@ -28,12 +26,12 @@ app.use('/clients', createClientsRouter(prisma));
 // Intelligence (separate paths: /clients/:id/intelligence, /engine/recompute)
 app.use('/', createIntelligenceRouter(prisma));
 
-// SPA fallback: serve index.html for any non-API route
-app.get('/{*path}', (req, res) => {
-  res.sendFile(path.join(frontendDist, 'index.html'));
-});
+// Only listen when running standalone (not in Vercel)
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  });
+}
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+module.exports = app;
