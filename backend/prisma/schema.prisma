@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Client {
+  id               Int                @id @default(autoincrement())
+  nombre           String
+  telefono         String             @unique
+  email            String?
+  empresa          String?
+  estatus          String             @default("Nuevo")
+  origen           String?
+  rol              String   @default("compras")
+  rolPersonalizado String?
+  notas            String?
+  proximoContacto  DateTime?
+  ultimoContacto   DateTime?
+  contactoManual   Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  interactions     Interaction[]
+  metrics          ClientMetrics?
+  statusChanges    StatusChange[]
+  recommendations  RecommendationLog[]
+}
+
+model Interaction {
+  id        Int      @id @default(autoincrement())
+  clientId  Int
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tipo      String
+  contenido String
+  resultado String?
+  outcome   String?
+  createdAt DateTime @default(now())
+}
+
+model ClientMetrics {
+  id                     Int      @id @default(autoincrement())
+  clientId               Int      @unique
+  client                 Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  totalInteractions      Int      @default(0)
+  interaccionesUltimos7  Int      @default(0)
+  interaccionesUltimos30 Int      @default(0)
+
+  respuestas             Int      @default(0)
+  silencios              Int      @default(0)
+  avances                Int      @default(0)
+  rechazos               Int      @default(0)
+
+  responseRate           Float    @default(0)
+  avgResponseTimeDays    Float?
+  canalPreferido         String?
+
+  diasEnEstatusActual    Int      @default(0)
+  cambiosEstatus         Int      @default(0)
+
+  priorityScore          Int      @default(50)
+  engagementScore        Int      @default(50)
+
+  disposition            String   @default("desconocido")
+  dispositionConfidence  Float    @default(0)
+
+  recommendedAction      String?
+  recommendedApproach    String?
+  recommendedChannel     String?
+  recommendedReasoning   String?
+
+  computedAt             DateTime @default(now())
+}
+
+model StatusChange {
+  id         Int      @id @default(autoincrement())
+  clientId   Int
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  fromStatus String
+  toStatus   String
+  createdAt  DateTime @default(now())
+}
+
+model RecommendationLog {
+  id                  Int       @id @default(autoincrement())
+  clientId            Int
+  client              Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  recommendedAction   String
+  recommendedApproach String?
+  priorityScore       Int
+  disposition         String
+  wasActedUpon        Boolean?
+  interactionId       Int?
+  createdAt           DateTime  @default(now())
+  resolvedAt          DateTime?
+}
