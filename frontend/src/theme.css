@@ -1,0 +1,64 @@
+:root {
+  /* Brand */
+  --color-brand-dark: #001529;
+  --color-brand-dark-hover: #002140;
+
+  /* Primary */
+  --color-primary: #1890ff;
+  --color-primary-hover: #096dd9;
+  --color-primary-active: #0050b3;
+
+  /* Success */
+  --color-success: #52c41a;
+  --color-success-dark: #3f8600;
+  --color-success-bg: #f6ffed;
+  --color-success-border: #b7eb8f;
+
+  /* Warning */
+  --color-warning: #faad14;
+  --color-warning-dark: #d48806;
+  --color-warning-bg: #fff7e6;
+  --color-warning-border: #ffe58f;
+
+  /* Error */
+  --color-error: #ff4d4f;
+  --color-error-dark: #cf1322;
+  --color-error-bg: #fff2f0;
+  --color-error-border: #ffccc7;
+
+  /* Info */
+  --color-info-bg: #e6f7ff;
+  --color-info-border: #91d5ff;
+  --color-info-text: #096dd9;
+
+  /* Accent */
+  --color-purple: #722ed1;
+  --color-geekblue: #2f54eb;
+  --color-geekblue-hover: #1d39c4;
+  --color-cyan: #13c2c2;
+  --color-orange: #fa8c16;
+
+  /* Text */
+  --color-text-primary: #262626;
+  --color-text-regular: #434343;
+  --color-text-secondary: #595959;
+  --color-text-tertiary: #8c8c8c;
+  --color-text-placeholder: #bfbfbf;
+
+  /* Borders */
+  --color-border: #d9d9d9;
+  --color-border-light: #f0f0f0;
+  --color-border-split: #f5f5f5;
+
+  /* Backgrounds */
+  --color-bg-layout: #f0f2f5;
+  --color-bg-container: #ffffff;
+  --color-bg-spotlight: #fafafa;
+  --color-bg-hover: #f5f5f5;
+
+  /* Focus */
+  --color-primary-outline: rgba(24, 144, 255, 0.2);
+
+  /* Gradient */
+  --gradient-hero: linear-gradient(135deg, #667eea, #764ba2);
+}

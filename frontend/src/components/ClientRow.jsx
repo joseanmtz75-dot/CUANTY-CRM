@@ -65,7 +65,7 @@ export default function ClientRow({ client, onEdit, onDelete, onHistory, onIntel
         )}
         <span
           className="status-badge"
-          style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#6b7280' }}
+          style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#8c8c8c' }}
         >
           {client.estatus}
         </span>

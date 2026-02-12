@@ -2,22 +2,22 @@ export const ESTATUSES = ['Nuevo', 'Contactado', 'Sin respuesta', 'Interesado', 
 export const ACTIVE_STATUSES = ['Nuevo', 'Contactado', 'Sin respuesta', 'Interesado', 'Negociando', 'Reactivar'];
 
 export const STATUS_COLORS = {
-  'Nuevo': '#3b82f6',
-  'Contactado': '#f59e0b',
-  'Sin respuesta': '#f97316',
-  'Interesado': '#8b5cf6',
-  'Negociando': '#6366f1',
-  'Cerrado': '#10b981',
-  'Perdido': '#ef4444',
-  'Descartado': '#6b7280',
-  'Reactivar': '#14b8a6',
+  'Nuevo': '#1890ff',
+  'Contactado': '#faad14',
+  'Sin respuesta': '#fa8c16',
+  'Interesado': '#722ed1',
+  'Negociando': '#2f54eb',
+  'Cerrado': '#52c41a',
+  'Perdido': '#ff4d4f',
+  'Descartado': '#8c8c8c',
+  'Reactivar': '#13c2c2',
 };
 
 export const TEMP_COLORS = {
-  caliente: '#ef4444',
-  tibio: '#f59e0b',
-  frio: '#3b82f6',
-  inactivo: '#9ca3af',
+  caliente: '#ff4d4f',
+  tibio: '#faad14',
+  frio: '#1890ff',
+  inactivo: '#bfbfbf',
 };
 
 export const TEMP_LABELS = {
@@ -70,12 +70,12 @@ export const DISPOSITION_LABELS = {
 };
 
 export const DISPOSITION_COLORS = {
-  receptivo: '#10b981',
-  listo_para_decision: '#8b5cf6',
-  dudoso: '#f59e0b',
-  desconocido: '#9ca3af',
-  frio: '#3b82f6',
-  saturado: '#ef4444',
+  receptivo: '#52c41a',
+  listo_para_decision: '#722ed1',
+  dudoso: '#faad14',
+  desconocido: '#bfbfbf',
+  frio: '#1890ff',
+  saturado: '#ff4d4f',
 };
 
 export const OUTCOMES = [
@@ -86,10 +86,10 @@ export const OUTCOMES = [
 ];
 
 export const OUTCOME_COLORS = {
-  respuesta: '#10b981',
-  avance: '#8b5cf6',
-  silencio: '#f59e0b',
-  rechazo: '#ef4444',
+  respuesta: '#52c41a',
+  avance: '#722ed1',
+  silencio: '#faad14',
+  rechazo: '#ff4d4f',
 };
 
 export const ACTION_LABELS = {

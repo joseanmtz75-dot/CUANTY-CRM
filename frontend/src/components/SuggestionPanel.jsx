@@ -3,14 +3,14 @@ import { getSuggestions } from '../api/clients';
 import { DISPOSITION_LABELS, DISPOSITION_COLORS } from '../utils/constants';
 
 const SECTIONS = [
-  { key: 'altaPrioridad', title: 'Alta prioridad', icon: '^', color: '#f59e0b', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'altaPrioridad', label: 'Alta prioridad' } } },
-  { key: 'listosParaCierre', title: 'Listos para cierre', icon: '$', color: '#8b5cf6', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'listosParaCierre', label: 'Listos para cierre' } } },
-  { key: 'enRiesgo', title: 'En riesgo', icon: '!', color: '#ef4444', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'enRiesgo', label: 'En riesgo' } } },
-  { key: 'vencidos', title: 'Seguimientos vencidos', icon: '!', color: '#dc2626', nav: { view: 'seguimiento', filter: { type: 'seguimiento', value: 'vencidos' } } },
-  { key: 'nuevosSinContactar', title: 'Nuevos sin contactar', icon: '+', color: '#3b82f6', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'nuevosSinContactar', label: 'Nuevos sin contactar' } } },
-  { key: 'sinContacto7dias', title: 'Sin contacto > 7 días', icon: '~', color: '#f59e0b', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'sinContacto7dias', label: 'Sin contacto > 7 días' } } },
-  { key: 'considerarDescartar', title: 'Considerar descartar', icon: '-', color: '#6b7280', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'considerarDescartar', label: 'Considerar descartar' } } },
-  { key: 'datosIncompletos', title: 'Datos incompletos', icon: '?', color: '#8b5cf6', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'datosIncompletos', label: 'Datos incompletos' } } },
+  { key: 'altaPrioridad', title: 'Alta prioridad', icon: '^', color: '#faad14', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'altaPrioridad', label: 'Alta prioridad' } } },
+  { key: 'listosParaCierre', title: 'Listos para cierre', icon: '$', color: '#722ed1', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'listosParaCierre', label: 'Listos para cierre' } } },
+  { key: 'enRiesgo', title: 'En riesgo', icon: '!', color: '#ff4d4f', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'enRiesgo', label: 'En riesgo' } } },
+  { key: 'vencidos', title: 'Seguimientos vencidos', icon: '!', color: '#cf1322', nav: { view: 'seguimiento', filter: { type: 'seguimiento', value: 'vencidos' } } },
+  { key: 'nuevosSinContactar', title: 'Nuevos sin contactar', icon: '+', color: '#1890ff', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'nuevosSinContactar', label: 'Nuevos sin contactar' } } },
+  { key: 'sinContacto7dias', title: 'Sin contacto > 7 días', icon: '~', color: '#faad14', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'sinContacto7dias', label: 'Sin contacto > 7 días' } } },
+  { key: 'considerarDescartar', title: 'Considerar descartar', icon: '-', color: '#8c8c8c', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'considerarDescartar', label: 'Considerar descartar' } } },
+  { key: 'datosIncompletos', title: 'Datos incompletos', icon: '?', color: '#722ed1', nav: { view: 'clients', filter: { type: 'sugerencia', value: 'datosIncompletos', label: 'Datos incompletos' } } },
 ];
 
 export default function SuggestionPanel({ onNavigate }) {
@@ -64,11 +64,11 @@ export default function SuggestionPanel({ onNavigate }) {
                         {DISPOSITION_LABELS[c.metrics.disposition].substring(0, 3)}
                       </span>
                     )}
-                    {c.empresa && <span style={{ color: '#9ca3af' }}> — {c.empresa}</span>}
+                    {c.empresa && <span style={{ color: '#bfbfbf' }}> — {c.empresa}</span>}
                   </li>
                 ))}
                 {items.length > 5 && (
-                  <li style={{ color: '#9ca3af', fontStyle: 'italic' }}>
+                  <li style={{ color: '#bfbfbf', fontStyle: 'italic' }}>
                     y {items.length - 5} más...
                   </li>
                 )}

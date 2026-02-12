@@ -9,11 +9,11 @@ import {
 } from '../utils/constants';
 
 const FACTOR_COLORS = {
-  urgencia: '#ef4444',
-  receptividad: '#10b981',
-  momentum: '#f59e0b',
-  valorEtapa: '#8b5cf6',
-  frescura: '#3b82f6',
+  urgencia: '#ff4d4f',
+  receptividad: '#52c41a',
+  momentum: '#faad14',
+  valorEtapa: '#722ed1',
+  frescura: '#1890ff',
 };
 
 const FACTOR_LABELS = {
@@ -44,7 +44,7 @@ export default function ClientIntelligenceModal({ client, onClose }) {
             {client.nombre}
             <span
               className="status-badge"
-              style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#6b7280', marginLeft: 8, fontSize: '0.75rem' }}
+              style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#8c8c8c', marginLeft: 8, fontSize: '0.75rem' }}
             >
               {client.estatus}
             </span>
@@ -53,7 +53,7 @@ export default function ClientIntelligenceModal({ client, onClose }) {
         </div>
 
         {loading && <p className="loading">Cargando analisis...</p>}
-        {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+        {error && <p style={{ color: '#cf1322' }}>{error}</p>}
 
         {data && (
           <>
@@ -62,7 +62,7 @@ export default function ClientIntelligenceModal({ client, onClose }) {
               <h4>Disposicion</h4>
               <span
                 className="intel-disposition-badge"
-                style={{ backgroundColor: DISPOSITION_COLORS[data.disposition?.disposition] || '#9ca3af' }}
+                style={{ backgroundColor: DISPOSITION_COLORS[data.disposition?.disposition] || '#bfbfbf' }}
               >
                 {DISPOSITION_LABELS[data.disposition?.disposition] || data.disposition?.disposition || 'Desconocido'}
               </span>
@@ -85,7 +85,7 @@ export default function ClientIntelligenceModal({ client, onClose }) {
               <h4>Prioridad</h4>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
                 <span className="intel-score-number">{data.priority?.score ?? '-'}</span>
-                <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>/100</span>
+                <span style={{ color: '#8c8c8c', fontSize: '0.85rem' }}>/100</span>
               </div>
               {data.priority?.factors && Object.entries(data.priority.factors).map(([key, val]) => (
                 <div className="intel-factor-row" key={key}>
@@ -95,7 +95,7 @@ export default function ClientIntelligenceModal({ client, onClose }) {
                       className="intel-factor-bar"
                       style={{
                         width: `${Math.min(val * 100, 100)}%`,
-                        backgroundColor: FACTOR_COLORS[key] || '#3b82f6',
+                        backgroundColor: FACTOR_COLORS[key] || '#1890ff',
                       }}
                     />
                   </div>

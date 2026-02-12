@@ -68,7 +68,7 @@ export default function InteractionHistory({ client, onClose }) {
                 >
                   Anterior
                 </button>
-                <span style={{ fontSize: '0.82rem', color: '#6b7280', alignSelf: 'center' }}>
+                <span style={{ fontSize: '0.82rem', color: '#8c8c8c', alignSelf: 'center' }}>
                   {data.page} / {data.totalPages}
                 </span>
                 <button
