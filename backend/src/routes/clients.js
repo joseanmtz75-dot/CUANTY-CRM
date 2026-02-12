@@ -69,6 +69,7 @@ function createClientsRouter(prisma) {
               origen: c.origen || 'Importación',
               rol: c.rol || 'compras',
               rolPersonalizado: c.rolPersonalizado || null,
+              vendedor: c.vendedor || null,
               proximoContacto,
               ultimoContacto: new Date(),
             }
@@ -117,6 +118,45 @@ function createClientsRouter(prisma) {
       });
 
       res.json(clients);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /clients/bulk-assign
+  router.put('/bulk-assign', async (req, res) => {
+    try {
+      const { vendedor, mode, clientIds, empresa } = req.body;
+      if (!vendedor) return res.status(400).json({ error: 'Vendedor requerido' });
+
+      switch (mode) {
+        case 'empresa': {
+          if (!empresa) return res.status(400).json({ error: 'Empresa requerida' });
+          const count = await prisma.$executeRaw`
+            UPDATE "Client" SET "vendedor" = ${vendedor}
+            WHERE "empresa" = ${empresa} AND ("vendedor" IS NULL OR "vendedor" = '')
+          `;
+          return res.json({ updated: Number(count) });
+        }
+        case 'manual': {
+          if (!Array.isArray(clientIds) || !clientIds.length)
+            return res.status(400).json({ error: 'IDs requeridos' });
+          const result = await prisma.client.updateMany({
+            where: { id: { in: clientIds.map(Number) } },
+            data: { vendedor },
+          });
+          return res.json({ updated: result.count });
+        }
+        case 'todos': {
+          const count = await prisma.$executeRaw`
+            UPDATE "Client" SET "vendedor" = ${vendedor}
+            WHERE "vendedor" IS NULL OR "vendedor" = ''
+          `;
+          return res.json({ updated: Number(count) });
+        }
+        default:
+          return res.status(400).json({ error: 'Modo inválido' });
+      }
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
