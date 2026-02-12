@@ -6,7 +6,9 @@
   "rewrites": [
     { "source": "/clients", "destination": "/api" },
     { "source": "/clients/(.*)", "destination": "/api" },
-    { "source": "/engine/(.*)", "destination": "/api" }
+    { "source": "/engine/(.*)", "destination": "/api" },
+    { "source": "/vendedores", "destination": "/api" },
+    { "source": "/vendedores/(.*)", "destination": "/api" }
   ],
   "functions": {
     "api/index.js": {
