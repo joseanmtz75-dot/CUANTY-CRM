@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { formatName, formatPhone } from '../utils/formatters';
 import { ESTATUSES, ORIGENES, ROLES } from '../utils/constants';
+import { getVendedores } from '../api/clients';
 
 const emptyForm = {
   nombre: '',
   telefono: '',
   email: '',
   empresa: '',
+  vendedor: '',
   estatus: 'Nuevo',
   origen: '',
   rol: 'compras',
@@ -18,6 +20,13 @@ const emptyForm = {
 export default function ClientForm({ client, onSave, onCancel }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
+  const [vendedores, setVendedores] = useState([]);
+
+  useEffect(() => {
+    getVendedores()
+      .then(data => setVendedores(data.vendedores || []))
+      .catch(() => setVendedores([]));
+  }, []);
 
   useEffect(() => {
     if (client) {
@@ -26,6 +35,7 @@ export default function ClientForm({ client, onSave, onCancel }) {
         telefono: client.telefono || '',
         email: client.email || '',
         empresa: client.empresa || '',
+        vendedor: client.vendedor || '',
         estatus: client.estatus || 'Nuevo',
         origen: client.origen || '',
         rol: client.rol || 'compras',
@@ -115,6 +125,16 @@ export default function ClientForm({ client, onSave, onCancel }) {
               onChange={handleChange}
               placeholder="Nombre de la empresa"
             />
+          </div>
+
+          <div className="form-group">
+            <label>Vendedor</label>
+            <select name="vendedor" value={form.vendedor} onChange={handleChange}>
+              <option value="">-- Sin asignar --</option>
+              {vendedores.map(v => (
+                <option key={v.id} value={v.nombre}>{v.nombre}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-row">

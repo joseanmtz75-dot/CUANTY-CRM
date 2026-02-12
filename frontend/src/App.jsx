@@ -2,6 +2,7 @@ import { useState } from 'react';
 import FollowUpView from './components/FollowUpView';
 import Dashboard from './components/Dashboard';
 import ClientTable from './components/ClientTable';
+import VendedorView from './components/VendedorView';
 import ChatAssistant from './components/ChatAssistant';
 import './App.css';
 
@@ -37,6 +38,12 @@ function App() {
             Clientes
           </button>
           <button
+            className={`nav-btn ${view === 'vendedores' ? 'active' : ''}`}
+            onClick={() => handleNavClick('vendedores')}
+          >
+            Vendedores
+          </button>
+          <button
             className={`nav-btn ${view === 'dashboard' ? 'active' : ''}`}
             onClick={() => handleNavClick('dashboard')}
           >
@@ -53,10 +60,11 @@ function App() {
         )}
         {view === 'clients' && (
           <ClientTable
-            initialFilter={['estatus', 'temperatura', 'sugerencia', 'disposition'].includes(viewFilter?.type) ? viewFilter : null}
+            initialFilter={['estatus', 'temperatura', 'sugerencia', 'disposition', 'vendedor'].includes(viewFilter?.type) ? viewFilter : null}
             onClearFilter={() => setViewFilter(null)}
           />
         )}
+        {view === 'vendedores' && <VendedorView onNavigate={handleNavigate} />}
         {view === 'dashboard' && <Dashboard onNavigate={handleNavigate} />}
       </main>
       <ChatAssistant />

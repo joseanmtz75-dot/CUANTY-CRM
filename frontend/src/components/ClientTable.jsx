@@ -61,6 +61,20 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
       return;
     }
 
+    // Special fetch for vendedor filter
+    if (initialFilter?.type === 'vendedor') {
+      getClients({ incluirDescartados: false })
+        .then(all => {
+          const filtered = initialFilter.value === '__sin_asignar__'
+            ? all.filter(c => !c.vendedor)
+            : all.filter(c => c.vendedor === initialFilter.value);
+          setClients(filtered);
+        })
+        .catch(() => setClients([]))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const filters = {};
     if (filtro !== 'Todos') filters.estatus = filtro;
     if (search.trim()) filters.search = search.trim();

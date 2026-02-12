@@ -8,6 +8,7 @@ export default defineConfig({
     proxy: {
       '/clients': 'http://localhost:3001',
       '/engine': 'http://localhost:3001',
+      '/vendedores': 'http://localhost:3001',
     }
   }
 })

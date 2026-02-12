@@ -27,8 +27,11 @@ export const deleteClient = (id) =>
 export const bulkImportClients = (clients) =>
   API.post('/clients/bulk', { clients }).then(res => res.data);
 
-export const getTodayFollowUps = () =>
-  API.get('/clients/today').then(res => res.data);
+export const getTodayFollowUps = (vendedor) => {
+  const params = {};
+  if (vendedor) params.vendedor = vendedor;
+  return API.get('/clients/today', { params }).then(res => res.data);
+};
 
 export const getInteractions = (clientId, page = 1) =>
   API.get(`/clients/${clientId}/interactions`, { params: { page } }).then(res => res.data);
@@ -44,3 +47,16 @@ export const getCleanup = () =>
 
 export const getClientIntelligence = (clientId) =>
   API.get(`/clients/${clientId}/intelligence`).then(res => res.data);
+
+export const bulkAssignClients = (data) =>
+  API.put('/clients/bulk-assign', data).then(res => res.data);
+
+// Vendedores
+export const getVendedores = () =>
+  API.get('/vendedores').then(res => res.data);
+
+export const createVendedor = (nombre) =>
+  API.post('/vendedores', { nombre }).then(res => res.data);
+
+export const deleteVendedor = (id) =>
+  API.delete(`/vendedores/${id}`).then(res => res.data);
