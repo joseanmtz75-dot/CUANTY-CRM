@@ -11,10 +11,10 @@ export default function Dashboard({ onNavigate }) {
   useEffect(() => {
     Promise.all([
       getClients({ incluirDescartados: true }).catch(() => []),
-      getTodayFollowUps().catch(() => []),
+      getTodayFollowUps().catch(() => ({ clients: [], totalCount: 0 })),
     ]).then(([allClients, today]) => {
       setClients(allClients);
-      setTodayData(today);
+      setTodayData(today.clients);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -50,11 +50,11 @@ export default function Dashboard({ onNavigate }) {
           <span className="stat-number">{clients.length}</span>
           <span className="stat-label">Total Clientes</span>
         </div>
-        <div className="stat-card stat-card-clickable" style={{ borderTopColor: '#f59e0b' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'hoy' })}>
+        <div className="stat-card stat-card-clickable" style={{ borderTopColor: '#faad14' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'hoy' })}>
           <span className="stat-number">{paraHoy}</span>
           <span className="stat-label">Para Hoy</span>
         </div>
-        <div className="stat-card stat-card-clickable" style={{ borderTopColor: '#ef4444' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'vencidos' })}>
+        <div className="stat-card stat-card-clickable" style={{ borderTopColor: '#ff4d4f' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'vencidos' })}>
           <span className="stat-number">{vencidos}</span>
           <span className="stat-label">Vencidos</span>
         </div>
@@ -81,7 +81,7 @@ export default function Dashboard({ onNavigate }) {
               <div
                 className="stat-card stat-card-clickable"
                 key={key}
-                style={{ borderTopColor: DISPOSITION_COLORS[key] || '#9ca3af' }}
+                style={{ borderTopColor: DISPOSITION_COLORS[key] || '#bfbfbf' }}
                 onClick={() => onNavigate('clients', { type: 'disposition', value: key, label: DISPOSITION_LABELS[key] || key })}
               >
                 <span className="stat-number">{count}</span>

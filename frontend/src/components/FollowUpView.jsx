@@ -6,6 +6,7 @@ import ClientIntelligenceModal from './ClientIntelligenceModal';
 
 export default function FollowUpView({ initialFilter, onClearFilter }) {
   const [clients, setClients] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState(null);
   const [quickLogType, setQuickLogType] = useState(null);
@@ -15,8 +16,11 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
   const fetchData = () => {
     setLoading(true);
     getTodayFollowUps()
-      .then(setClients)
-      .catch(() => setClients([]))
+      .then(data => {
+        setClients(data.clients);
+        setTotalCount(data.totalCount);
+      })
+      .catch(() => { setClients([]); setTotalCount(0); })
       .finally(() => setLoading(false));
   };
 
@@ -69,6 +73,10 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
         </div>
       </div>
 
+      {totalCount > clients.length && (
+        <p className="followup-cap-note">Mostrando {clients.length} de {totalCount} clientes (máx. 25 por día)</p>
+      )}
+
       {activeFilter && (
         <div className="active-filter-bar">
           <span className="filter-chip">
@@ -109,7 +117,7 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
                     {client.empresa && <span className="followup-empresa">{client.empresa}</span>}
                   </div>
                   <div className="followup-card-meta">
-                    <span className="status-badge status-badge-sm" style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#6b7280' }}>
+                    <span className="status-badge status-badge-sm" style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#8c8c8c' }}>
                       {client.estatus}
                     </span>
                     {client.diasVencido > 0 && (

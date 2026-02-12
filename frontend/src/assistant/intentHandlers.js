@@ -63,14 +63,14 @@ const handlers = {
   async seguimiento_hoy() {
     try {
       const data = await getTodayFollowUps();
-      const all = [...(data.overdue || []), ...(data.today || [])];
+      const all = data.clients || [];
       if (!all.length) {
         return {
           text: "No tienes seguimientos pendientes para hoy. Buen trabajo!",
           options: ["Vencidos", "Sugerencias"],
         };
       }
-      const overdue = data.overdue?.length || 0;
+      const overdue = all.filter(c => c.diasVencido > 0).length;
       let title = `Tienes ${all.length} seguimientos para hoy.`;
       if (overdue > 0) title += ` (${overdue} vencidos)`;
       const items = all.slice(0, 5).map(
@@ -92,7 +92,7 @@ const handlers = {
   async vencidos() {
     try {
       const data = await getTodayFollowUps();
-      const overdue = data.overdue || [];
+      const overdue = (data.clients || []).filter(c => c.diasVencido > 0);
       if (!overdue.length) {
         return {
           text: "No tienes seguimientos vencidos. Todo al dia!",

@@ -18,16 +18,20 @@ function createFollowupsRouter(prisma) {
   // GET /clients/today
   router.get('/today', async (req, res) => {
     try {
+      const { vendedor } = req.query;
       const now = new Date();
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
 
+      const where = {
+        proximoContacto: { lte: endOfDay },
+        estatus: { notIn: ESTATUS_SIN_SEGUIMIENTO },
+        rol: 'compras',
+      };
+      if (vendedor) where.vendedor = vendedor;
+
       const clients = await prisma.client.findMany({
-        where: {
-          proximoContacto: { lte: endOfDay },
-          estatus: { notIn: ESTATUS_SIN_SEGUIMIENTO },
-          rol: 'compras',
-        },
+        where,
         include: {
           interactions: { orderBy: { createdAt: 'desc' } },
           metrics: true,
@@ -85,7 +89,9 @@ function createFollowupsRouter(prisma) {
         return new Date(a.proximoContacto) - new Date(b.proximoContacto);
       });
 
-      res.json(enriched);
+      const totalCount = enriched.length;
+      const limited = enriched.slice(0, 25);
+      res.json({ clients: limited, totalCount });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
