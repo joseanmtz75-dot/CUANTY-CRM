@@ -6,11 +6,12 @@
   "rewrites": [
     { "source": "/clients", "destination": "/api" },
     { "source": "/clients/(.*)", "destination": "/api" },
-    { "source": "/engine/(.*)", "destination": "/api" }
+    { "source": "/engine/(.*)", "destination": "/api" },
+    { "source": "/debug", "destination": "/api" }
   ],
   "functions": {
     "api/index.js": {
-      "includeFiles": "backend/src/**"
+      "includeFiles": "backend/{src/**,node_modules/.prisma/**}"
     }
   }
 }

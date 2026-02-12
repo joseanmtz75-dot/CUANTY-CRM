@@ -31,6 +31,25 @@ app.use('/clients', createClientsRouter(prisma));
 // Intelligence (separate paths: /clients/:id/intelligence, /engine/recompute)
 app.use('/', createIntelligenceRouter(prisma));
 
+// Temporary debug endpoint — remove after verifying production
+app.get('/debug', async (req, res) => {
+  const results = { databaseUrlSet: !!process.env.DATABASE_URL };
+  try {
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pgResult = await pool.query('SELECT COUNT(*) FROM "Client"');
+    results.pgCount = parseInt(pgResult.rows[0].count, 10);
+    await pool.end();
+  } catch (err) {
+    results.pgError = err.message;
+  }
+  try {
+    results.prismaCount = await prisma.client.count();
+  } catch (err) {
+    results.prismaError = err.message;
+  }
+  res.json(results);
+});
+
 // Only listen when running standalone (not in Vercel)
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 3000;
