@@ -5,3 +5,5 @@ dist/
 NUL
 nul
 tmp_*.json
+
+.vercel
