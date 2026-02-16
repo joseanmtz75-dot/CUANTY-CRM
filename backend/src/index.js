@@ -10,6 +10,9 @@ const { createFollowupsRouter } = require('./routes/followups');
 const { createInteractionsRouter } = require('./routes/interactions');
 const { createIntelligenceRouter } = require('./routes/intelligence');
 const { createVendedoresRouter } = require('./routes/vendedores');
+const { createMiDiaRouter } = require('./routes/mi-dia');
+const { createAlertsRouter } = require('./routes/alerts');
+const { createRendimientoRouter } = require('./routes/rendimiento');
 
 // Singleton PrismaClient for serverless environments
 if (!globalThis.__prisma) {
@@ -34,6 +37,12 @@ app.use('/clients', createClientsRouter(prisma));
 app.use('/', createIntelligenceRouter(prisma));
 // Vendedores CRUD
 app.use('/vendedores', createVendedoresRouter(prisma));
+// Mi Dia dashboard
+app.use('/dashboard', createMiDiaRouter(prisma));
+// Rendimiento
+app.use('/dashboard', createRendimientoRouter(prisma));
+// Alerts
+app.use('/alerts', createAlertsRouter(prisma));
 
 // Only listen when running standalone (not in Vercel)
 if (!process.env.VERCEL) {

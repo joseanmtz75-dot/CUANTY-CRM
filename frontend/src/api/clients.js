@@ -51,6 +51,14 @@ export const getClientIntelligence = (clientId) =>
 export const bulkAssignClients = (data) =>
   API.put('/clients/bulk-assign', data).then(res => res.data);
 
+// Mi Dia
+export const getMiDia = () =>
+  API.get('/dashboard/mi-dia').then(res => res.data);
+
+// Rendimiento
+export const getRendimiento = () =>
+  API.get('/dashboard/rendimiento').then(res => res.data);
+
 // Vendedores
 export const getVendedores = () =>
   API.get('/vendedores').then(res => res.data);
@@ -60,3 +68,7 @@ export const createVendedor = (nombre) =>
 
 export const deleteVendedor = (id) =>
   API.delete(`/vendedores/${id}`).then(res => res.data);
+
+// Alerts
+export const getAlerts = () =>
+  API.get('/alerts').then(res => res.data);

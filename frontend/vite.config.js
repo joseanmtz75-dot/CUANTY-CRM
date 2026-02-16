@@ -9,6 +9,8 @@ export default defineConfig({
       '/clients': 'http://localhost:3001',
       '/engine': 'http://localhost:3001',
       '/vendedores': 'http://localhost:3001',
+      '/dashboard': 'http://localhost:3001',
+      '/alerts': 'http://localhost:3001',
     }
   }
 })

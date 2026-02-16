@@ -14,6 +14,7 @@ const emptyForm = {
   rol: 'compras',
   rolPersonalizado: '',
   notas: '',
+  nextActionNote: '',
   proximoContacto: '',
 };
 
@@ -41,6 +42,7 @@ export default function ClientForm({ client, onSave, onCancel }) {
         rol: client.rol || 'compras',
         rolPersonalizado: client.rolPersonalizado || '',
         notas: client.notas || '',
+        nextActionNote: client.nextActionNote || '',
         proximoContacto: client.proximoContacto ? client.proximoContacto.split('T')[0] : '',
       });
     } else {
@@ -188,6 +190,17 @@ export default function ClientForm({ client, onSave, onCancel }) {
               type="date"
               value={form.proximoContacto}
               onChange={handleChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Nota de proxima accion</label>
+            <textarea
+              name="nextActionNote"
+              value={form.nextActionNote}
+              onChange={handleChange}
+              placeholder="¿Que hacer en el proximo contacto?"
+              rows={2}
             />
           </div>
 

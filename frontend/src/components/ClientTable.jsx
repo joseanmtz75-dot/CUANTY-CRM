@@ -11,8 +11,8 @@ const FILTER_ESTATUSES = ['Todos', ...ACTIVE_STATUSES, 'Cerrado', 'Perdido'];
 
 export default function ClientTable({ initialFilter, onClearFilter }) {
   const [clients, setClients] = useState([]);
-  const [filtro, setFiltro] = useState(initialFilter?.value || 'Todos');
-  const [search, setSearch] = useState('');
+  const [filtro, setFiltro] = useState(initialFilter?.type === 'search' ? 'Todos' : (initialFilter?.value || 'Todos'));
+  const [search, setSearch] = useState(initialFilter?.type === 'search' ? initialFilter.value : '');
   const [showDescartados, setShowDescartados] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);

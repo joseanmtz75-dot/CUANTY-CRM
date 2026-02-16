@@ -8,7 +8,10 @@
     { "source": "/clients/(.*)", "destination": "/api" },
     { "source": "/engine/(.*)", "destination": "/api" },
     { "source": "/vendedores", "destination": "/api" },
-    { "source": "/vendedores/(.*)", "destination": "/api" }
+    { "source": "/vendedores/(.*)", "destination": "/api" },
+    { "source": "/dashboard/(.*)", "destination": "/api" },
+    { "source": "/alerts", "destination": "/api" },
+    { "source": "/alerts/(.*)", "destination": "/api" }
   ],
   "functions": {
     "api/index.js": {

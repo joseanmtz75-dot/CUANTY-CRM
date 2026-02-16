@@ -78,8 +78,23 @@ export default function ClientRow({ client, onEdit, onDelete, onHistory, onIntel
           </span>
         )}
       </td>
-      <td className={getDateClass(client.proximoContacto)}>
-        {formatShortDate(client.proximoContacto)}
+      <td className={`proximo-cell ${!client.proximoContacto ? 'no-date' : ''}`}>
+        {!client.proximoContacto ? (
+          <span className="badge-warning" title="Sin fecha de proximo contacto">Sin fecha</span>
+        ) : (
+          <>
+            <span className={getDateClass(client.proximoContacto)}>{formatShortDate(client.proximoContacto)}</span>
+            {getDateClass(client.proximoContacto) === 'date-overdue' && (
+              <span className="badge-vencido">Vencido</span>
+            )}
+            {getDateClass(client.proximoContacto) === 'date-today' && (
+              <span className="badge-hoy">Hoy</span>
+            )}
+          </>
+        )}
+        {client.nextActionNote && (
+          <span className="action-note-indicator" title={client.nextActionNote}>📋</span>
+        )}
       </td>
       <td>{formatShortDate(client.ultimoContacto)}</td>
       <td className="actions-cell">

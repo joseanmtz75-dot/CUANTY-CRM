@@ -18,6 +18,7 @@ model Client {
   rolPersonalizado String?
   vendedor         String?
   notas            String?
+  nextActionNote   String?
   proximoContacto  DateTime?
   ultimoContacto   DateTime?
   contactoManual   Boolean            @default(false)
