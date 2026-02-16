@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getTodayFollowUps } from '../api/clients';
 import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ACTION_LABELS, APPROACH_LABELS } from '../utils/constants';
 import QuickLogModal from './QuickLogModal';
@@ -12,27 +12,30 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
   const [quickLogType, setQuickLogType] = useState(null);
   const [activeFilter, setActiveFilter] = useState(initialFilter?.value || null);
   const [intelligenceClient, setIntelligenceClient] = useState(null);
+  const [error, setError] = useState(null);
 
   const fetchData = () => {
     setLoading(true);
+    setError(null);
     getTodayFollowUps()
       .then(data => {
         setClients(data.clients);
         setTotalCount(data.totalCount);
       })
-      .catch(() => { setClients([]); setTotalCount(0); })
+      .catch(() => { setClients([]); setTotalCount(0); setError('Error al cargar seguimientos.'); })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const vencidos = clients.filter(c => c.diasVencido > 0);
-  const nuevos = clients.filter(c => c.estatus === 'Nuevo' && !c.ultimaInteraccion);
+  const vencidos = useMemo(() => clients.filter(c => c.diasVencido > 0), [clients]);
+  const nuevos = useMemo(() => clients.filter(c => c.estatus === 'Nuevo' && !c.ultimaInteraccion), [clients]);
   const paraHoy = clients.length;
 
-  const displayedClients = activeFilter === 'vencidos'
-    ? clients.filter(c => c.diasVencido > 0)
-    : clients;
+  const displayedClients = useMemo(() =>
+    activeFilter === 'vencidos' ? clients.filter(c => c.diasVencido > 0) : clients,
+    [clients, activeFilter]
+  );
 
   const clearFilter = () => {
     setActiveFilter(null);
@@ -57,6 +60,13 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
   return (
     <div className="followup-view">
       <h2>Seguimiento del Día</h2>
+
+      {error && (
+        <div className="error-banner">
+          {error}
+          <button className="btn btn-sm btn-secondary" onClick={fetchData} style={{ marginLeft: '0.5rem' }}>Reintentar</button>
+        </div>
+      )}
 
       <div className="followup-summary">
         <div className="summary-item">

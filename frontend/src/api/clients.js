@@ -11,6 +11,8 @@ export const getClients = (filters = {}) => {
     if (filters.estatus) params.estatus = filters.estatus;
     if (filters.search) params.search = filters.search;
     if (filters.incluirDescartados) params.incluirDescartados = 'true';
+    if (filters.vendedor) params.vendedor = filters.vendedor;
+    if (filters.disposition) params.disposition = filters.disposition;
   }
   return API.get('/clients', { params }).then(res => res.data);
 };
@@ -41,9 +43,6 @@ export const logInteraction = (clientId, data) =>
 
 export const getSuggestions = () =>
   API.get('/clients/suggestions').then(res => res.data);
-
-export const getCleanup = () =>
-  API.get('/clients/cleanup').then(res => res.data);
 
 export const getClientIntelligence = (clientId) =>
   API.get(`/clients/${clientId}/intelligence`).then(res => res.data);

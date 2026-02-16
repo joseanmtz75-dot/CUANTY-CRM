@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getRendimiento } from '../api/clients';
-
-const STATUS_COLORS = {
-  Nuevo: '#1890ff',
-  Contactado: '#13c2c2',
-  'Sin respuesta': '#faad14',
-  Interesado: '#52c41a',
-  Negociando: '#722ed1',
-  Reactivar: '#fa8c16',
-  Cerrado: '#389e0d',
-  Perdido: '#ff4d4f',
-  Descartado: '#8c8c8c',
-};
+import { STATUS_COLORS } from '../utils/constants';
 
 function MiRendimiento() {
   const [data, setData] = useState(null);
@@ -65,12 +54,12 @@ function MiRendimiento() {
           <span className="resumen-number">{mes.tasaRespuesta}%</span>
           <span className="resumen-label">Tasa de respuesta</span>
         </div>
-        <div className="resumen-card" style={{ borderTopColor: '#389e0d' }}>
-          <span className="resumen-number" style={{ color: '#389e0d' }}>{mes.ganados}</span>
+        <div className="resumen-card" style={{ borderTopColor: 'var(--color-success)' }}>
+          <span className="resumen-number" style={{ color: 'var(--color-success)' }}>{mes.ganados}</span>
           <span className="resumen-label">Ganados</span>
         </div>
-        <div className="resumen-card" style={{ borderTopColor: '#ff4d4f' }}>
-          <span className="resumen-number" style={{ color: '#ff4d4f' }}>{mes.perdidos}</span>
+        <div className="resumen-card" style={{ borderTopColor: 'var(--color-error)' }}>
+          <span className="resumen-number" style={{ color: 'var(--color-error)' }}>{mes.perdidos}</span>
           <span className="resumen-label">Perdidos</span>
         </div>
       </div>

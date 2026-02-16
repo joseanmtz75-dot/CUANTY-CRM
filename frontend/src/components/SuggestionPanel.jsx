@@ -16,15 +16,17 @@ const SECTIONS = [
 export default function SuggestionPanel({ onNavigate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     getSuggestions()
       .then(setData)
-      .catch(() => setData(null))
+      .catch(() => { setData(null); setError('Error al cargar sugerencias.'); })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <p className="loading">Cargando sugerencias...</p>;
+  if (error) return <div className="error-banner">{error}</div>;
   if (!data) return null;
 
   const hasAnything = SECTIONS.some(s => data[s.key]?.length > 0);
@@ -64,11 +66,11 @@ export default function SuggestionPanel({ onNavigate }) {
                         {DISPOSITION_LABELS[c.metrics.disposition].substring(0, 3)}
                       </span>
                     )}
-                    {c.empresa && <span style={{ color: '#bfbfbf' }}> — {c.empresa}</span>}
+                    {c.empresa && <span className="suggestion-empresa"> — {c.empresa}</span>}
                   </li>
                 ))}
                 {items.length > 5 && (
-                  <li style={{ color: '#bfbfbf', fontStyle: 'italic' }}>
+                  <li className="suggestion-more">
                     y {items.length - 5} más...
                   </li>
                 )}

@@ -9,12 +9,14 @@ export default function VendedorView({ onNavigate }) {
   const [nombre, setNombre] = useState('');
   const [saving, setSaving] = useState(false);
   const [assignTarget, setAssignTarget] = useState(null);
+  const [error, setError] = useState(null);
 
   const fetchData = () => {
     setLoading(true);
+    setError(null);
     getVendedores()
       .then(setData)
-      .catch(() => setData({ vendedores: [], sinAsignar: 0 }))
+      .catch(() => { setData({ vendedores: [], sinAsignar: 0 }); setError('Error al cargar vendedores.'); })
       .finally(() => setLoading(false));
   };
 
@@ -50,6 +52,13 @@ export default function VendedorView({ onNavigate }) {
 
   return (
     <div className="dashboard">
+      {error && (
+        <div className="error-banner">
+          {error}
+          <button className="btn btn-sm btn-secondary" onClick={fetchData} style={{ marginLeft: '0.5rem' }}>Reintentar</button>
+        </div>
+      )}
+
       <div className="table-header">
         <h2>Vendedores</h2>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>

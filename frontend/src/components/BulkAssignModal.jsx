@@ -20,13 +20,15 @@ export default function BulkAssignModal({ vendedorNombre, onClose, onSuccess }) 
   // manual tab
   const [selected, setSelected] = useState(new Set());
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     getClients({ incluirDescartados: true })
       .then(all => {
         const sinAsignar = all.filter(c => !c.vendedor);
         setClients(sinAsignar);
       })
-      .catch(() => setClients([]))
+      .catch(() => { setClients([]); setError('Error al cargar clientes.'); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -124,7 +126,9 @@ export default function BulkAssignModal({ vendedorNombre, onClose, onSuccess }) 
         </div>
 
         <div className="import-step" style={{ minHeight: 180, marginTop: '1rem' }}>
-          {loading ? (
+          {error ? (
+            <div className="error-banner">{error}</div>
+          ) : loading ? (
             <p className="loading">Cargando clientes...</p>
           ) : clients.length === 0 ? (
             <p className="empty">No hay clientes sin asignar</p>

@@ -32,13 +32,16 @@ export default function AlertasPanel({ onViewClient }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
 
+  const [error, setError] = useState(null);
+
   const fetchAlerts = () => {
+    setError(null);
     getAlerts()
       .then(data => {
         setAlerts(data.alerts);
         setTotal(data.total);
       })
-      .catch(() => {});
+      .catch(() => setError('Error al cargar alertas'));
   };
 
   useEffect(() => {
@@ -77,7 +80,9 @@ export default function AlertasPanel({ onViewClient }) {
             <span>{total} activa{total !== 1 ? 's' : ''}</span>
           </div>
           <div className="alertas-panel-body">
-            {alerts && total > 0 ? (
+            {error ? (
+              <div className="alertas-empty">{error}</div>
+            ) : alerts && total > 0 ? (
               <>
                 <AlertSection titulo="Sin contacto (+14 dias)" items={alerts.sinContacto} onViewClient={handleView} />
                 <AlertSection titulo="Estancados en estatus" items={alerts.estancados} onViewClient={handleView} />

@@ -22,11 +22,12 @@ export default function ClientForm({ client, onSave, onCancel }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [vendedores, setVendedores] = useState([]);
+  const [vendedorError, setVendedorError] = useState(null);
 
   useEffect(() => {
     getVendedores()
       .then(data => setVendedores(data.vendedores || []))
-      .catch(() => setVendedores([]));
+      .catch(() => { setVendedores([]); setVendedorError('No se pudieron cargar vendedores'); });
   }, []);
 
   useEffect(() => {
@@ -137,6 +138,7 @@ export default function ClientForm({ client, onSave, onCancel }) {
                 <option key={v.id} value={v.nombre}>{v.nombre}</option>
               ))}
             </select>
+            {vendedorError && <span className="field-error">{vendedorError}</span>}
           </div>
 
           <div className="form-row">

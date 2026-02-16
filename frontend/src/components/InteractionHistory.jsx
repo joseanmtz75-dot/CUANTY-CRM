@@ -12,12 +12,14 @@ const TYPE_ICONS = {
 export default function InteractionHistory({ client, onClose }) {
   const [data, setData] = useState({ interactions: [], total: 0, page: 1, totalPages: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchPage = (page) => {
     setLoading(true);
+    setError(null);
     getInteractions(client.id, page)
       .then(setData)
-      .catch(() => setData({ interactions: [], total: 0, page: 1, totalPages: 0 }))
+      .catch(() => { setData({ interactions: [], total: 0, page: 1, totalPages: 0 }); setError('Error al cargar historial.'); })
       .finally(() => setLoading(false));
   };
 
@@ -37,9 +39,11 @@ export default function InteractionHistory({ client, onClose }) {
           <button className="btn-close" onClick={onClose}>&times;</button>
         </div>
 
+        {error && <div className="error-banner">{error}</div>}
+
         {loading ? (
           <p className="loading">Cargando historial...</p>
-        ) : data.interactions.length === 0 ? (
+        ) : data.interactions.length === 0 && !error ? (
           <p className="history-empty">No hay interacciones registradas.</p>
         ) : (
           <>

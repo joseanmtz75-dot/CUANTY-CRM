@@ -52,6 +52,7 @@ export const ROLES = [
 ];
 
 export function computeTemperatura(client) {
+  if (['Cerrado', 'Perdido', 'Descartado'].includes(client.estatus)) return 'inactivo';
   const ultimo = client.ultimoContacto || client.createdAt;
   if (!ultimo) return 'frio';
   const dias = Math.floor((Date.now() - new Date(ultimo).getTime()) / (1000 * 60 * 60 * 24));

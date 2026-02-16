@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getClients, getTodayFollowUps } from '../api/clients';
 import { ESTATUSES, STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, computeTemperatura, DISPOSITION_LABELS, DISPOSITION_COLORS } from '../utils/constants';
 import SuggestionPanel from './SuggestionPanel';
@@ -7,15 +7,17 @@ export default function Dashboard({ onNavigate }) {
   const [clients, setClients] = useState([]);
   const [todayData, setTodayData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     Promise.all([
-      getClients({ incluirDescartados: true }).catch(() => []),
-      getTodayFollowUps().catch(() => ({ clients: [], totalCount: 0 })),
+      getClients({ incluirDescartados: true }),
+      getTodayFollowUps(),
     ]).then(([allClients, today]) => {
       setClients(allClients);
       setTodayData(today.clients);
-    }).finally(() => setLoading(false));
+    }).catch(() => setError('Error al cargar datos del dashboard.'))
+      .finally(() => setLoading(false));
   }, []);
 
   const countByStatus = (estatus) => clients.filter(c => c.estatus === estatus).length;
@@ -25,18 +27,21 @@ export default function Dashboard({ onNavigate }) {
   const vencidos = todayData.filter(c => c.diasVencido > 0).length;
 
   // Disposition distribution
-  const activeClients = clients.filter(c => !['Cerrado', 'Perdido', 'Descartado'].includes(c.estatus));
-  const dispCounts = {};
-  for (const c of activeClients) {
-    const d = c.metrics?.disposition || 'desconocido';
-    dispCounts[d] = (dispCounts[d] || 0) + 1;
-  }
+  const activeClients = useMemo(() => clients.filter(c => !['Cerrado', 'Perdido', 'Descartado'].includes(c.estatus)), [clients]);
+  const dispCounts = useMemo(() => {
+    const counts = {};
+    for (const c of activeClients) {
+      const d = c.metrics?.disposition || 'desconocido';
+      counts[d] = (counts[d] || 0) + 1;
+    }
+    return counts;
+  }, [activeClients]);
 
   // Top priority clients
-  const topPriority = [...activeClients]
+  const topPriority = useMemo(() => [...activeClients]
     .filter(c => c.metrics?.priorityScore != null)
     .sort((a, b) => (b.metrics.priorityScore || 0) - (a.metrics.priorityScore || 0))
-    .slice(0, 5);
+    .slice(0, 5), [activeClients]);
 
   if (loading) return <p className="loading">Cargando estadisticas...</p>;
 
@@ -44,17 +49,19 @@ export default function Dashboard({ onNavigate }) {
     <div className="dashboard">
       <h2>Dashboard</h2>
 
+      {error && <div className="error-banner">{error}</div>}
+
       {/* Follow-up stats */}
       <div className="stats-grid">
         <div className="stat-card stat-total stat-card-clickable" onClick={() => onNavigate('clients', null)}>
           <span className="stat-number">{clients.length}</span>
           <span className="stat-label">Total Clientes</span>
         </div>
-        <div className="stat-card stat-card-clickable" style={{ borderTopColor: '#faad14' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'hoy' })}>
+        <div className="stat-card stat-card-clickable" style={{ borderTopColor: 'var(--color-warning)' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'hoy' })}>
           <span className="stat-number">{paraHoy}</span>
           <span className="stat-label">Para Hoy</span>
         </div>
-        <div className="stat-card stat-card-clickable" style={{ borderTopColor: '#ff4d4f' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'vencidos' })}>
+        <div className="stat-card stat-card-clickable" style={{ borderTopColor: 'var(--color-error)' }} onClick={() => onNavigate('seguimiento', { type: 'seguimiento', value: 'vencidos' })}>
           <span className="stat-number">{vencidos}</span>
           <span className="stat-label">Vencidos</span>
         </div>

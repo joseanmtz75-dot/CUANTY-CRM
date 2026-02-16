@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getClients, getSuggestions, createClient, updateClient, deleteClient } from '../api/clients';
 import { ACTIVE_STATUSES, computeTemperatura } from '../utils/constants';
 import ClientRow from './ClientRow';
@@ -21,9 +21,23 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
   const [historyClient, setHistoryClient] = useState(null);
   const [intelligenceClient, setIntelligenceClient] = useState(null);
   const [sortBy, setSortBy] = useState('fecha');
+  const [error, setError] = useState(null);
+
+  const sortedClients = useMemo(() => {
+    if (sortBy === 'prioridad') {
+      return [...clients].sort((a, b) => (b.metrics?.priorityScore || 0) - (a.metrics?.priorityScore || 0));
+    }
+    return clients;
+  }, [clients, sortBy]);
 
   const fetchClients = () => {
     setLoading(true);
+    setError(null);
+
+    const handleError = (err) => {
+      setClients([]);
+      setError('Error al cargar clientes. Verifica tu conexión.');
+    };
 
     // Special fetch for temperatura filter
     if (initialFilter?.type === 'temperatura') {
@@ -35,7 +49,7 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
           );
           setClients(filtered);
         })
-        .catch(() => setClients([]))
+        .catch(handleError)
         .finally(() => setLoading(false));
       return;
     }
@@ -44,33 +58,25 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
     if (initialFilter?.type === 'sugerencia') {
       getSuggestions()
         .then(data => setClients(data[initialFilter.value] || []))
-        .catch(() => setClients([]))
+        .catch(handleError)
         .finally(() => setLoading(false));
       return;
     }
 
-    // Special fetch for disposition filter
+    // Server-side disposition filter
     if (initialFilter?.type === 'disposition') {
-      getClients({ incluirDescartados: false })
-        .then(all => {
-          const filtered = all.filter(c => c.metrics?.disposition === initialFilter.value);
-          setClients(filtered);
-        })
-        .catch(() => setClients([]))
+      getClients({ incluirDescartados: false, disposition: initialFilter.value })
+        .then(setClients)
+        .catch(handleError)
         .finally(() => setLoading(false));
       return;
     }
 
-    // Special fetch for vendedor filter
+    // Server-side vendedor filter
     if (initialFilter?.type === 'vendedor') {
-      getClients({ incluirDescartados: false })
-        .then(all => {
-          const filtered = initialFilter.value === '__sin_asignar__'
-            ? all.filter(c => !c.vendedor)
-            : all.filter(c => c.vendedor === initialFilter.value);
-          setClients(filtered);
-        })
-        .catch(() => setClients([]))
+      getClients({ incluirDescartados: false, vendedor: initialFilter.value })
+        .then(setClients)
+        .catch(handleError)
         .finally(() => setLoading(false));
       return;
     }
@@ -81,7 +87,7 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
     if (showDescartados) filters.incluirDescartados = true;
     getClients(filters)
       .then(setClients)
-      .catch(() => setClients([]))
+      .catch(handleError)
       .finally(() => setLoading(false));
   };
 
@@ -144,14 +150,13 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
         </div>
       </div>
 
-      <div className="search-bar" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <div className="search-bar">
         <input
           className="search-input"
           type="text"
           placeholder="Buscar por nombre, telefono, email o empresa..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1 }}
         />
         <select className="sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
           <option value="fecha">Fecha</option>
@@ -191,9 +196,16 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
         <label className="toggle-label" htmlFor="showDescartados">Mostrar descartados</label>
       </div>
 
+      {error && (
+        <div className="error-banner">
+          {error}
+          <button className="btn btn-sm btn-secondary" onClick={fetchClients} style={{ marginLeft: '0.5rem' }}>Reintentar</button>
+        </div>
+      )}
+
       {loading ? (
         <p className="loading">Cargando clientes...</p>
-      ) : clients.length === 0 ? (
+      ) : clients.length === 0 && !error ? (
         <p className="empty">No se encontraron clientes.</p>
       ) : (
         <div className="table-wrapper">
@@ -210,10 +222,7 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
               </tr>
             </thead>
             <tbody>
-              {[...clients].sort((a, b) => {
-                if (sortBy === 'prioridad') return (b.metrics?.priorityScore || 0) - (a.metrics?.priorityScore || 0);
-                return 0;
-              }).map(client => (
+              {sortedClients.map(client => (
                 <ClientRow
                   key={client.id}
                   client={client}

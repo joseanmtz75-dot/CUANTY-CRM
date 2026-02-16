@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMiDia } from '../api/clients';
-
-const STATUS_COLORS = {
-  Nuevo: '#1890ff',
-  Contactado: '#13c2c2',
-  'Sin respuesta': '#faad14',
-  Interesado: '#52c41a',
-  Negociando: '#722ed1',
-  Reactivar: '#fa8c16',
-  Cerrado: '#389e0d',
-  Perdido: '#ff4d4f',
-  Descartado: '#8c8c8c',
-};
+import { STATUS_COLORS } from '../utils/constants';
 
 function MiDia({ onNavigate }) {
   const [data, setData] = useState(null);

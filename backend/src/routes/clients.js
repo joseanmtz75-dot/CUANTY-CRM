@@ -89,7 +89,7 @@ function createClientsRouter(prisma) {
   // GET /clients
   router.get('/', async (req, res) => {
     try {
-      const { estatus, search, incluirDescartados } = req.query;
+      const { estatus, search, incluirDescartados, vendedor, disposition } = req.query;
       const where = {};
 
       if (estatus) {
@@ -105,6 +105,24 @@ function createClientsRouter(prisma) {
           { email: { contains: search } },
           { empresa: { contains: search } },
         ];
+      }
+
+      // Filter by vendedor
+      if (vendedor === '__sin_asignar__') {
+        where.OR = where.OR || undefined;
+        where.AND = [
+          ...(where.AND || []),
+          { OR: [{ vendedor: null }, { vendedor: '' }] },
+        ];
+      } else if (vendedor) {
+        where.vendedor = vendedor;
+      }
+
+      // Filter by disposition (via metrics relation)
+      const metricsWhere = {};
+      if (disposition) {
+        metricsWhere.disposition = disposition;
+        where.metrics = { is: metricsWhere };
       }
 
       const clients = await prisma.client.findMany({

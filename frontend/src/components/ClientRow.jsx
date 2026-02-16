@@ -1,4 +1,5 @@
-import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ROLES } from '../utils/constants';
+import { memo } from 'react';
+import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ROLES, computeTemperatura } from '../utils/constants';
 
 function getDateClass(dateStr) {
   if (!dateStr) return '';
@@ -16,17 +17,6 @@ function formatShortDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
 }
 
-// Simple temperature computation for table view (no backend enrichment)
-function getTemperatura(client) {
-  const sinSeguimiento = ['Cerrado', 'Perdido', 'Descartado'];
-  if (sinSeguimiento.includes(client.estatus)) return 'inactivo';
-  const ultimo = client.ultimoContacto || client.createdAt;
-  if (!ultimo) return 'frio';
-  const dias = Math.floor((Date.now() - new Date(ultimo).getTime()) / (1000 * 60 * 60 * 24));
-  if (['Interesado', 'Negociando'].includes(client.estatus) && dias <= 3) return 'caliente';
-  if (dias <= 5) return 'tibio';
-  return 'frio';
-}
 
 function getRolBadgeLabel(client) {
   if (!client.rol || client.rol === 'compras') return null;
@@ -37,8 +27,8 @@ function getRolBadgeLabel(client) {
   return found ? found.label.substring(0, 3).toUpperCase() : client.rol.substring(0, 3).toUpperCase();
 }
 
-export default function ClientRow({ client, onEdit, onDelete, onHistory, onIntelligence }) {
-  const temp = getTemperatura(client);
+function ClientRow({ client, onEdit, onDelete, onHistory, onIntelligence }) {
+  const temp = computeTemperatura(client);
   const disp = client.metrics?.disposition;
   const rolLabel = getRolBadgeLabel(client);
 
@@ -81,17 +71,20 @@ export default function ClientRow({ client, onEdit, onDelete, onHistory, onIntel
       <td className={`proximo-cell ${!client.proximoContacto ? 'no-date' : ''}`}>
         {!client.proximoContacto ? (
           <span className="badge-warning" title="Sin fecha de proximo contacto">Sin fecha</span>
-        ) : (
-          <>
-            <span className={getDateClass(client.proximoContacto)}>{formatShortDate(client.proximoContacto)}</span>
-            {getDateClass(client.proximoContacto) === 'date-overdue' && (
-              <span className="badge-vencido">Vencido</span>
-            )}
-            {getDateClass(client.proximoContacto) === 'date-today' && (
-              <span className="badge-hoy">Hoy</span>
-            )}
-          </>
-        )}
+        ) : (() => {
+          const dateClass = getDateClass(client.proximoContacto);
+          return (
+            <>
+              <span className={dateClass}>{formatShortDate(client.proximoContacto)}</span>
+              {dateClass === 'date-overdue' && (
+                <span className="badge-vencido">Vencido</span>
+              )}
+              {dateClass === 'date-today' && (
+                <span className="badge-hoy">Hoy</span>
+              )}
+            </>
+          );
+        })()}
         {client.nextActionNote && (
           <span className="action-note-indicator" title={client.nextActionNote}>📋</span>
         )}
@@ -105,3 +98,5 @@ export default function ClientRow({ client, onEdit, onDelete, onHistory, onIntel
     </tr>
   );
 }
+
+export default memo(ClientRow);
