@@ -11,7 +11,8 @@
     { "source": "/vendedores/(.*)", "destination": "/api" },
     { "source": "/dashboard/(.*)", "destination": "/api" },
     { "source": "/alerts", "destination": "/api" },
-    { "source": "/alerts/(.*)", "destination": "/api" }
+    { "source": "/alerts/(.*)", "destination": "/api" },
+    { "source": "/chat", "destination": "/api" }
   ],
   "functions": {
     "api/index.js": {

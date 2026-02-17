@@ -71,3 +71,7 @@ export const deleteVendedor = (id) =>
 // Alerts
 export const getAlerts = () =>
   API.get('/alerts').then(res => res.data);
+
+// Chat (DeepSeek AI)
+export const sendChatMessage = (messages) =>
+  API.post('/chat', { messages }).then(res => res.data);

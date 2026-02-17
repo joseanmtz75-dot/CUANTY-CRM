@@ -11,6 +11,7 @@ export default defineConfig({
       '/vendedores': 'http://localhost:3001',
       '/dashboard': 'http://localhost:3001',
       '/alerts': 'http://localhost:3001',
+      '/chat': 'http://localhost:3001',
     }
   }
 })

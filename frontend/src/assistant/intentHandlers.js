@@ -278,6 +278,7 @@ const handlers = {
       text: "No entendi tu pregunta.",
       hint: "Prueba con alguna de estas opciones:",
       options: ["Seguimiento", "Vencidos", "Sugerencias", "Estadisticas"],
+      _useAI: true,
     };
   },
 };

@@ -13,6 +13,7 @@ const { createVendedoresRouter } = require('./routes/vendedores');
 const { createMiDiaRouter } = require('./routes/mi-dia');
 const { createAlertsRouter } = require('./routes/alerts');
 const { createRendimientoRouter } = require('./routes/rendimiento');
+const { createChatRouter } = require('./routes/chat');
 
 // Singleton PrismaClient for serverless environments
 if (!globalThis.__prisma) {
@@ -43,6 +44,8 @@ app.use('/dashboard', createMiDiaRouter(prisma));
 app.use('/dashboard', createRendimientoRouter(prisma));
 // Alerts
 app.use('/alerts', createAlertsRouter(prisma));
+// Chat (DeepSeek AI)
+app.use('/chat', createChatRouter(prisma));
 
 // Only listen when running standalone (not in Vercel)
 if (!process.env.VERCEL) {

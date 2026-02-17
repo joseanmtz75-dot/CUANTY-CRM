@@ -1723,25 +1723,27 @@ tbody tr:hover {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: var(--color-brand-dark);
-  color: #fff;
+  background: none;
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
   z-index: 150;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s, box-shadow 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0;
+  transition: transform 0.2s;
 }
 
 .chat-fab:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transform: scale(1.1);
+  box-shadow: none;
+}
+
+.chat-fab-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 }
 
 .chat-panel {
@@ -1768,6 +1770,19 @@ tbody tr:hover {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+}
+
+.chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chat-header-avatar {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
 }
 
 .chat-header-title {

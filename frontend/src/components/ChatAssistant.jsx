@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { resolveIntent } from '../assistant/intentEngine';
 import { handleIntent } from '../assistant/intentHandlers';
+import { sendChatMessage } from '../api/clients';
 
 const WELCOME_MSG = {
   text: "Hola! Soy tu asistente CUANTY.",
@@ -49,13 +50,39 @@ export default function ChatAssistant() {
     if (!text || isLoading) return;
 
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text }]);
+    const updatedMessages = [...messages, { role: 'user', text }];
+    setMessages(updatedMessages);
     setIsLoading(true);
 
-    const { intent, params } = resolveIntent(text);
-    const response = await handleIntent(intent, params);
+    try {
+      const { intent, params } = resolveIntent(text);
+      const response = await handleIntent(intent, params);
 
-    setMessages(prev => [...prev, { role: 'assistant', text: response }]);
+      if (response._useAI) {
+        // Build plain-text conversation history for DeepSeek
+        const chatHistory = updatedMessages
+          .filter(m => typeof m.text === 'string')
+          .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
+
+        try {
+          const { reply } = await sendChatMessage(chatHistory);
+          setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
+        } catch {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            text: "No pude conectar con el asistente de IA. Intenta de nuevo o usa los comandos del CRM.",
+          }]);
+        }
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', text: response }]);
+      }
+    } catch {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: "Ocurrio un error. Intenta de nuevo.",
+      }]);
+    }
+
     setIsLoading(false);
   };
 
@@ -75,7 +102,7 @@ export default function ChatAssistant() {
   if (!isOpen) {
     return (
       <button className="chat-fab" onClick={() => setIsOpen(true)} title="Asistente CUANTY">
-        💬
+        <img src="/cuanty-bot.png" alt="Asistente CUANTY" className="chat-fab-img" />
       </button>
     );
   }
@@ -87,7 +114,10 @@ export default function ChatAssistant() {
   return (
     <div className="chat-panel">
       <div className="chat-header">
-        <span className="chat-header-title">Asistente CUANTY</span>
+        <div className="chat-header-left">
+          <img src="/cuanty-bot.png" alt="CUANTY" className="chat-header-avatar" />
+          <span className="chat-header-title">Asistente CUANTY</span>
+        </div>
         <button className="chat-header-close" onClick={() => setIsOpen(false)}>✕</button>
       </div>
       <div className="chat-messages">
