@@ -22,6 +22,19 @@ if (!globalThis.__prisma) {
 }
 const prisma = globalThis.__prisma;
 
+// Seed initial vendedores
+async function seedVendedores() {
+  const nombres = ['Natalia Moran'];
+  for (const nombre of nombres) {
+    await prisma.vendedor.upsert({
+      where: { nombre },
+      update: {},
+      create: { nombre },
+    });
+  }
+}
+seedVendedores().catch(err => console.error('Error seeding vendedores:', err.message));
+
 const app = express();
 
 app.use(cors());
