@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { resolveIntent } from '../assistant/intentEngine';
 import { handleIntent } from '../assistant/intentHandlers';
 import { sendChatMessage } from '../api/clients';
+import { X, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const WELCOME_MSG = {
   text: "Hola! Soy tu asistente CUANTY.",
@@ -12,24 +14,29 @@ const WELCOME_MSG = {
 function StructuredMessage({ data }) {
   return (
     <>
-      <div className="chat-resp-title">{data.text}</div>
+      <div className="font-semibold text-sm">{data.text}</div>
       {data.items?.length > 0 && (
-        <div className="chat-resp-items">
+        <div className="mt-2 space-y-1">
           {data.items.map((item, i) => (
-            <div key={i} className="chat-resp-item">
-              <span className="chat-resp-item-label">{item.label}</span>
-              <span className="chat-resp-item-detail">{item.detail}</span>
+            <div key={i} className="flex justify-between text-xs py-0.5">
+              <span className="font-medium text-foreground">{item.label}</span>
+              <span className="text-muted-foreground">{item.detail}</span>
             </div>
           ))}
         </div>
       )}
-      {data.hint && <div className="chat-resp-hint">{data.hint}</div>}
+      {data.hint && <div className="mt-2 text-xs text-muted-foreground italic">{data.hint}</div>}
     </>
   );
 }
 
-export default function ChatAssistant() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function ChatAssistant({ isOpen: externalOpen, onClose, onOpen }) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsOpen = (val) => {
+    if (val) { onOpen?.(); } else { onClose?.(); }
+    setInternalOpen(val);
+  };
   const [messages, setMessages] = useState([
     { role: 'assistant', text: WELCOME_MSG },
   ]);
@@ -59,7 +66,6 @@ export default function ChatAssistant() {
       const response = await handleIntent(intent, params);
 
       if (response._useAI) {
-        // Build plain-text conversation history for DeepSeek
         const chatHistory = updatedMessages
           .filter(m => typeof m.text === 'string')
           .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }));
@@ -101,8 +107,12 @@ export default function ChatAssistant() {
 
   if (!isOpen) {
     return (
-      <button className="chat-fab" onClick={() => setIsOpen(true)} title="Asistente CUANTY">
-        <img src="/cuanty-bot.png" alt="Asistente CUANTY" className="chat-fab-img" />
+      <button
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-[#001529] shadow-lg hover:scale-105 transition-transform flex items-center justify-center overflow-hidden"
+        onClick={() => setIsOpen(true)}
+        title="Asistente CUANTY"
+      >
+        <img src="/cuanty-bot.png" alt="Asistente CUANTY" className="h-10 w-10 rounded-full object-cover" />
       </button>
     );
   }
@@ -112,30 +122,47 @@ export default function ChatAssistant() {
   );
 
   return (
-    <div className="chat-panel">
-      <div className="chat-header">
-        <div className="chat-header-left">
-          <img src="/cuanty-bot.png" alt="CUANTY" className="chat-header-avatar" />
-          <span className="chat-header-title">Asistente CUANTY</span>
+    <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[480px] rounded-xl border bg-card shadow-2xl flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="bg-[#001529] text-white px-4 py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2.5">
+          <img src="/cuanty-bot.png" alt="CUANTY" className="h-8 w-8 rounded-full object-cover" />
+          <span className="font-semibold text-sm">Asistente CUANTY</span>
         </div>
-        <button className="chat-header-close" onClick={() => setIsOpen(false)}>✕</button>
+        <button className="text-white/70 hover:text-white transition-colors" onClick={() => setIsOpen(false)}>
+          <X className="h-5 w-5" />
+        </button>
       </div>
-      <div className="chat-messages">
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.map((msg, i) => {
           const isStructured = msg.role === 'assistant' && typeof msg.text === 'object';
           const showOptions = !isLoading && i === lastAssistantIdx && isStructured && msg.text.options?.length > 0;
 
           return (
-            <div key={i} className="chat-msg-wrapper">
-              <div className={`chat-bubble chat-bubble-${msg.role}`}>
+            <div key={i}>
+              <div
+                className={`max-w-[85%] px-3 py-2 rounded-xl text-sm ${
+                  msg.role === 'user'
+                    ? 'ml-auto bg-[#001529] text-white rounded-br-sm'
+                    : 'bg-muted rounded-bl-sm'
+                }`}
+              >
                 {isStructured ? <StructuredMessage data={msg.text} /> : msg.text}
               </div>
               {showOptions && (
-                <div className="chat-options">
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {msg.text.options.map((opt, j) => (
-                    <button key={j} className="chat-option-btn" onClick={() => handleOptionClick(opt)}>
+                    <Button
+                      key={j}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs rounded-full"
+                      onClick={() => handleOptionClick(opt)}
+                    >
                       {opt}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -143,26 +170,33 @@ export default function ChatAssistant() {
           );
         })}
         {isLoading && (
-          <div className="chat-bubble chat-bubble-assistant chat-loading">
+          <div className="max-w-[85%] px-3 py-2 rounded-xl bg-muted rounded-bl-sm text-sm text-muted-foreground">
             Consultando...
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="chat-input-bar">
+
+      {/* Input */}
+      <div className="border-t p-2 flex gap-2 shrink-0">
         <input
           ref={inputRef}
           type="text"
-          className="chat-input"
+          className="flex-1 h-9 px-3 rounded-lg border text-sm bg-background focus:outline-none focus:ring-1 focus:ring-ring"
           placeholder="Escribe tu pregunta..."
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
         />
-        <button className="chat-send-btn" onClick={handleSend} disabled={isLoading || !input.trim()}>
-          Enviar
-        </button>
+        <Button
+          size="icon"
+          className="h-9 w-9 shrink-0"
+          onClick={handleSend}
+          disabled={isLoading || !input.trim()}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

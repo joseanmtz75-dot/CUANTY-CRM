@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { logInteraction } from '../api/clients';
 import { INTERACTION_TYPES, CALL_RESULTS, ESTATUSES, OUTCOMES, OUTCOME_COLORS } from '../utils/constants';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function QuickLogModal({ client, defaultTipo, onClose, onSaved }) {
   const [tipo, setTipo] = useState(defaultTipo || 'llamada');
@@ -15,7 +19,7 @@ export default function QuickLogModal({ client, defaultTipo, onClose, onSaved })
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!contenido.trim()) {
-      setError('Escribe qué pasó');
+      setError('Escribe que paso');
       return;
     }
 
@@ -40,106 +44,106 @@ export default function QuickLogModal({ client, defaultTipo, onClose, onSaved })
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal quicklog-modal">
-        <h3>Registrar — {client.nombre}</h3>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Registrar — {client.nombre}</DialogTitle>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Tipo</label>
-            <div className="pill-group">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Tipo</Label>
+            <div className="flex flex-wrap gap-1.5">
               {INTERACTION_TYPES.map(t => (
-                <button
+                <Button
                   key={t.value}
                   type="button"
-                  className={`pill ${tipo === t.value ? 'pill-active' : ''}`}
+                  variant={tipo === t.value ? 'default' : 'outline'}
+                  size="sm"
+                  className="rounded-full h-7 text-xs"
                   onClick={() => setTipo(t.value)}
                 >
                   {t.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
 
           {tipo === 'llamada' && (
-            <div className="form-group">
-              <label>Resultado</label>
-              <div className="pill-group">
+            <div className="space-y-1.5">
+              <Label>Resultado</Label>
+              <div className="flex flex-wrap gap-1.5">
                 {CALL_RESULTS.map(r => (
-                  <button
+                  <Button
                     key={r.value}
                     type="button"
-                    className={`pill ${resultado === r.value ? 'pill-active' : ''}`}
+                    variant={resultado === r.value ? 'default' : 'outline'}
+                    size="sm"
+                    className="rounded-full h-7 text-xs"
                     onClick={() => setResultado(resultado === r.value ? '' : r.value)}
                   >
                     {r.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="form-group">
-            <label>¿Qué pasó?</label>
-            <textarea
-              className="quicklog-textarea"
+          <div className="space-y-1.5">
+            <Label>Que paso?</Label>
+            <Textarea
               value={contenido}
               onChange={(e) => { setContenido(e.target.value); setError(''); }}
-              placeholder="Describe brevemente la interacción..."
+              placeholder="Describe brevemente la interaccion..."
               rows={3}
             />
           </div>
 
-          <div className="form-group">
-            <label>Resultado del contacto</label>
-            <div className="pill-group">
+          <div className="space-y-1.5">
+            <Label>Resultado del contacto</Label>
+            <div className="flex flex-wrap gap-1.5">
               {OUTCOMES.map(o => (
-                <button
+                <Button
                   key={o.value}
                   type="button"
-                  className={`pill-outcome ${outcome === o.value ? 'pill-outcome-active' : ''}`}
-                  style={outcome === o.value ? { backgroundColor: OUTCOME_COLORS[o.value], borderColor: OUTCOME_COLORS[o.value] } : {}}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-7 text-xs"
+                  style={outcome === o.value ? { backgroundColor: OUTCOME_COLORS[o.value], borderColor: OUTCOME_COLORS[o.value], color: 'white' } : {}}
                   onClick={() => setOutcome(outcome === o.value ? '' : o.value)}
                 >
                   {o.label}
-                </button>
+                </Button>
               ))}
             </div>
-            <p className="outcome-hint">Esto mejora las recomendaciones</p>
+            <p className="text-xs text-muted-foreground">Esto mejora las recomendaciones</p>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Cambiar estatus (opcional)</label>
-              <select value={nuevoEstatus} onChange={(e) => setNuevoEstatus(e.target.value)}>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Cambiar estatus (opcional)</Label>
+              <select value={nuevoEstatus} onChange={(e) => setNuevoEstatus(e.target.value)}
+                className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring">
                 <option value="">Sin cambio</option>
-                {ESTATUSES.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+                {ESTATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-
-            <div className="form-group">
-              <label>Próximo contacto (opcional)</label>
-              <input
-                type="date"
-                value={proximoContacto}
-                onChange={(e) => setProximoContacto(e.target.value)}
+            <div className="space-y-1.5">
+              <Label>Proximo contacto (opcional)</Label>
+              <input type="date" value={proximoContacto} onChange={(e) => setProximoContacto(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-              />
+                className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
             </div>
           </div>
 
-          {error && <div className="quicklog-error">{error}</div>}
+          {error && <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-3 py-2">{error}</div>}
 
-          <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

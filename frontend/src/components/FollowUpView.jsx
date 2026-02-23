@@ -1,6 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTodayFollowUps } from '../api/clients';
 import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ACTION_LABELS, APPROACH_LABELS } from '../utils/constants';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { X } from 'lucide-react';
 import QuickLogModal from './QuickLogModal';
 import ClientIntelligenceModal from './ClientIntelligenceModal';
 
@@ -55,147 +60,176 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
     fetchData();
   };
 
-  if (loading) return <p className="loading">Cargando seguimientos...</p>;
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex gap-4">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 flex-1 rounded-xl" />)}
+        </div>
+        {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-xl" />)}
+      </div>
+    );
+  }
 
   return (
-    <div className="followup-view">
-      <h2>Seguimiento del Día</h2>
-
+    <div className="space-y-4">
       {error && (
-        <div className="error-banner">
+        <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-4 py-3 flex items-center gap-2">
           {error}
-          <button className="btn btn-sm btn-secondary" onClick={fetchData} style={{ marginLeft: '0.5rem' }}>Reintentar</button>
+          <Button variant="outline" size="sm" onClick={fetchData}>Reintentar</Button>
         </div>
       )}
 
-      <div className="followup-summary">
-        <div className="summary-item">
-          <span className="summary-number">{paraHoy}</span>
-          <span className="summary-label">Para hoy</span>
-        </div>
-        <div className="summary-item summary-overdue">
-          <span className="summary-number">{vencidos.length}</span>
-          <span className="summary-label">Vencidos</span>
-        </div>
-        <div className="summary-item summary-new">
-          <span className="summary-number">{nuevos.length}</span>
-          <span className="summary-label">Nuevos sin contactar</span>
-        </div>
+      {/* Summary */}
+      <div className="flex gap-4">
+        <Card className="flex-1 text-center border-t-4 border-t-blue-500">
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="text-2xl font-bold">{paraHoy}</div>
+            <div className="text-xs text-muted-foreground">Para hoy</div>
+          </CardContent>
+        </Card>
+        <Card className="flex-1 text-center border-t-4 border-t-red-500">
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="text-2xl font-bold text-red-600">{vencidos.length}</div>
+            <div className="text-xs text-muted-foreground">Vencidos</div>
+          </CardContent>
+        </Card>
+        <Card className="flex-1 text-center border-t-4 border-t-cyan-500">
+          <CardContent className="pt-3 pb-2 px-3">
+            <div className="text-2xl font-bold">{nuevos.length}</div>
+            <div className="text-xs text-muted-foreground">Nuevos sin contactar</div>
+          </CardContent>
+        </Card>
       </div>
 
       {totalCount > clients.length && (
-        <p className="followup-cap-note">Mostrando {clients.length} de {totalCount} clientes (máx. 25 por día)</p>
+        <p className="text-xs text-muted-foreground">Mostrando {clients.length} de {totalCount} clientes (max. 25 por dia)</p>
       )}
 
       {activeFilter && (
-        <div className="active-filter-bar">
-          <span className="filter-chip">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1">
             {filterLabels[activeFilter] || activeFilter}
-            <button className="filter-chip-clear" onClick={clearFilter}>&times;</button>
-          </span>
-          <span className="filter-result-count">{displayedClients.length} resultado{displayedClients.length !== 1 ? 's' : ''}</span>
+            <button onClick={clearFilter}><X className="h-3 w-3" /></button>
+          </Badge>
+          <span className="text-xs text-muted-foreground">{displayedClients.length} resultado{displayedClients.length !== 1 ? 's' : ''}</span>
         </div>
       )}
 
       {displayedClients.length === 0 ? (
-        <div className="followup-empty">
-          <p>No hay seguimientos {activeFilter ? `${filterLabels[activeFilter]?.toLowerCase() || activeFilter}` : 'pendientes para hoy'}.</p>
-        </div>
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            No hay seguimientos {activeFilter ? `${filterLabels[activeFilter]?.toLowerCase() || activeFilter}` : 'pendientes para hoy'}.
+          </CardContent>
+        </Card>
       ) : (
-        <div className="followup-list">
+        <div className="space-y-3">
           {displayedClients.map(client => (
-            <div
+            <Card
               key={client.id}
-              className={`followup-card ${client.diasVencido > 0 ? 'followup-card-overdue' : ''}`}
+              className={`border-l-4 transition-all hover:shadow-md ${client.diasVencido > 0 ? 'bg-amber-50/50' : ''}`}
               style={{ borderLeftColor: client.disposition?.disposition ? (DISPOSITION_COLORS[client.disposition.disposition] || TEMP_COLORS[client.temperatura]) : TEMP_COLORS[client.temperatura] }}
             >
-              <div className="followup-card-header">
-                <div className="followup-card-info">
-                  <div className="followup-card-name">
-                    {client.disposition?.disposition && DISPOSITION_LABELS[client.disposition.disposition] ? (
-                      <span
-                        className="disposition-badge"
-                        style={{ backgroundColor: DISPOSITION_COLORS[client.disposition.disposition] }}
-                        onClick={() => setIntelligenceClient(client)}
-                      >
-                        {DISPOSITION_LABELS[client.disposition.disposition]}
+              <CardContent className="py-3 px-4 space-y-2">
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {client.disposition?.disposition && DISPOSITION_LABELS[client.disposition.disposition] ? (
+                        <Badge
+                          className="text-white text-[10px] cursor-pointer"
+                          style={{ backgroundColor: DISPOSITION_COLORS[client.disposition.disposition] }}
+                          onClick={() => setIntelligenceClient(client)}
+                        >
+                          {DISPOSITION_LABELS[client.disposition.disposition]}
+                        </Badge>
+                      ) : (
+                        <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: TEMP_COLORS[client.temperatura] }} title={TEMP_LABELS[client.temperatura]} />
+                      )}
+                      <span className="font-semibold text-sm">{client.nombre}</span>
+                      {client.empresa && <span className="text-xs text-muted-foreground">({client.empresa})</span>}
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Badge className="text-white text-[10px]" style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#8c8c8c' }}>
+                        {client.estatus}
+                      </Badge>
+                      {client.diasVencido > 0 && (
+                        <Badge variant="destructive" className="text-[10px]">VENCIDO {client.diasVencido}d</Badge>
+                      )}
+                      {client.priority?.score != null && (
+                        <Badge
+                          className="bg-[#001529] text-white hover:bg-[#001529] text-[10px] cursor-pointer"
+                          onClick={() => setIntelligenceClient(client)}
+                        >
+                          P{client.priority.score}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {client.diasSinContacto === 0 ? 'Hoy' : `Hace ${client.diasSinContacto}d`}
                       </span>
-                    ) : (
-                      <span className="temp-dot" style={{ backgroundColor: TEMP_COLORS[client.temperatura] }} title={TEMP_LABELS[client.temperatura]} />
-                    )}
-                    <strong>{client.nombre}</strong>
-                    {client.empresa && <span className="followup-empresa">{client.empresa}</span>}
+                    </div>
                   </div>
-                  <div className="followup-card-meta">
-                    <span className="status-badge status-badge-sm" style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#8c8c8c' }}>
-                      {client.estatus}
+                  <span className="text-sm text-muted-foreground shrink-0">{client.telefono}</span>
+                </div>
+
+                {/* Last interaction */}
+                {client.ultimaInteraccion && (
+                  <div className="flex items-start gap-2 text-xs">
+                    <Badge variant="outline" className="text-[10px] shrink-0">{client.ultimaInteraccion.tipo}</Badge>
+                    <span className="text-muted-foreground line-clamp-1">
+                      {client.ultimaInteraccion.contenido.length > 80
+                        ? client.ultimaInteraccion.contenido.substring(0, 80) + '...'
+                        : client.ultimaInteraccion.contenido}
                     </span>
-                    {client.diasVencido > 0 && (
-                      <span className="overdue-badge">VENCIDO {client.diasVencido}d</span>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {client.recommendations?.length > 0 && (
+                  <div className="bg-muted/50 rounded-lg px-3 py-2 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary" className="text-[10px] font-semibold">
+                        {ACTION_LABELS[client.recommendations[0].action] || client.recommendations[0].action}
+                      </Badge>
+                      {client.recommendations[0].approach && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {APPROACH_LABELS[client.recommendations[0].approach] || client.recommendations[0].approach}
+                        </Badge>
+                      )}
+                      {client.recommendations[0].channel && (
+                        <span className="text-[10px] text-muted-foreground">via {client.recommendations[0].channel}</span>
+                      )}
+                    </div>
+                    {client.recommendations[0].reasoning && (
+                      <p className="text-xs text-muted-foreground">{client.recommendations[0].reasoning}</p>
                     )}
-                    {client.priority?.score != null && (
-                      <span
-                        className="priority-badge"
-                        onClick={() => setIntelligenceClient(client)}
+                  </div>
+                )}
+
+                {/* Suggestions */}
+                {client.sugerencias?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {client.sugerencias.slice(0, 2).map((s, i) => (
+                      <Badge
+                        key={i}
+                        variant={s.prioridad === 'alta' ? 'destructive' : s.prioridad === 'media' ? 'secondary' : 'outline'}
+                        className="text-[10px]"
                       >
-                        P{client.priority.score}
-                      </span>
-                    )}
-                    <span className="followup-dias">
-                      {client.diasSinContacto === 0 ? 'Hoy' : `Hace ${client.diasSinContacto}d`}
-                    </span>
+                        {s.mensaje}
+                      </Badge>
+                    ))}
                   </div>
-                </div>
-                <div className="followup-card-phone">{client.telefono}</div>
-              </div>
+                )}
 
-              {client.ultimaInteraccion && (
-                <div className="followup-last-interaction">
-                  <span className="interaction-type-badge">{client.ultimaInteraccion.tipo}</span>
-                  <span className="interaction-preview">
-                    {client.ultimaInteraccion.contenido.length > 80
-                      ? client.ultimaInteraccion.contenido.substring(0, 80) + '...'
-                      : client.ultimaInteraccion.contenido}
-                  </span>
+                {/* Actions */}
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" className="h-7 text-xs" onClick={() => openQuickLog(client, 'llamada')}>Llame</Button>
+                  <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={() => openQuickLog(client, 'mensaje')}>Mensaje</Button>
+                  <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={() => openQuickLog(client, 'nota')}>Nota</Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openQuickLog(client, null)}>Registrar...</Button>
                 </div>
-              )}
-
-              {client.recommendations?.length > 0 && (
-                <div className="followup-recommendation">
-                  <span className="recommendation-action-label">
-                    {ACTION_LABELS[client.recommendations[0].action] || client.recommendations[0].action}
-                  </span>
-                  {client.recommendations[0].approach && (
-                    <span className="recommendation-approach">
-                      {APPROACH_LABELS[client.recommendations[0].approach] || client.recommendations[0].approach}
-                    </span>
-                  )}
-                  {client.recommendations[0].channel && (
-                    <span className="recommendation-channel">via {client.recommendations[0].channel}</span>
-                  )}
-                  {client.recommendations[0].reasoning && (
-                    <p className="recommendation-reasoning">{client.recommendations[0].reasoning}</p>
-                  )}
-                </div>
-              )}
-
-              {client.sugerencias?.length > 0 && (
-                <div className="followup-suggestions">
-                  {client.sugerencias.slice(0, 2).map((s, i) => (
-                    <span key={i} className={`suggestion-chip suggestion-${s.prioridad}`}>
-                      {s.mensaje}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="followup-actions">
-                <button className="btn btn-sm btn-action" onClick={() => openQuickLog(client, 'llamada')}>Llamé</button>
-                <button className="btn btn-sm btn-action" onClick={() => openQuickLog(client, 'mensaje')}>Mensaje</button>
-                <button className="btn btn-sm btn-action" onClick={() => openQuickLog(client, 'nota')}>Nota</button>
-                <button className="btn btn-sm btn-action-secondary" onClick={() => openQuickLog(client, null)}>Registrar...</button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

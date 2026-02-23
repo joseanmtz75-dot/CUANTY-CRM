@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getVendedores, createVendedor, deleteVendedor } from '../api/clients';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Plus, X, UserPlus, Trash2 } from 'lucide-react';
 import BulkAssignModal from './BulkAssignModal';
 
 export default function VendedorView({ onNavigate }) {
@@ -48,75 +52,91 @@ export default function VendedorView({ onNavigate }) {
     }
   };
 
-  if (loading) return <p className="loading">Cargando vendedores...</p>;
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard">
+    <div className="space-y-4">
       {error && (
-        <div className="error-banner">
+        <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-4 py-3 flex items-center gap-2">
           {error}
-          <button className="btn btn-sm btn-secondary" onClick={fetchData} style={{ marginLeft: '0.5rem' }}>Reintentar</button>
+          <Button variant="outline" size="sm" onClick={fetchData}>Reintentar</Button>
         </div>
       )}
 
-      <div className="table-header">
-        <h2>Vendedores</h2>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancelar' : '+ Nuevo Vendedor'}
-        </button>
+      <div className="flex items-center justify-between">
+        <Button onClick={() => setShowForm(!showForm)}>
+          {showForm ? <><X className="h-4 w-4 mr-2" />Cancelar</> : <><Plus className="h-4 w-4 mr-2" />Nuevo Vendedor</>}
+        </Button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0' }}>
+        <form onSubmit={handleCreate} className="flex gap-2">
           <input
-            className="search-input"
+            className="flex-1 h-9 px-3 rounded-lg border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             type="text"
             placeholder="Nombre del vendedor"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             autoFocus
-            style={{ flex: 1 }}
           />
-          <button className="btn btn-primary" type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving}>
             {saving ? 'Guardando...' : 'Agregar'}
-          </button>
+          </Button>
         </form>
       )}
 
-      <div className="stats-grid">
-        <div
-          className="stat-card stat-card-clickable"
-          style={{ borderTopColor: '#bfbfbf' }}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <Card
+          className="cursor-pointer hover:-translate-y-0.5 transition-all border-t-4 border-t-gray-400"
           onClick={() => onNavigate('clients', { type: 'vendedor', value: '__sin_asignar__', label: 'Sin asignar' })}
         >
-          <span className="stat-number">{data.sinAsignar}</span>
-          <span className="stat-label">Sin asignar</span>
-        </div>
+          <CardContent className="pt-4 pb-3 px-4 text-center">
+            <div className="text-3xl font-bold">{data.sinAsignar}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Sin asignar</div>
+          </CardContent>
+        </Card>
 
         {data.vendedores.map(v => (
-          <div
-            className="stat-card stat-card-clickable"
+          <Card
+            className="cursor-pointer hover:-translate-y-0.5 transition-all border-t-4 border-t-[#001529] relative group"
             key={v.id}
-            style={{ borderTopColor: 'var(--color-brand)', position: 'relative' }}
             onClick={() => onNavigate('clients', { type: 'vendedor', value: v.nombre, label: v.nombre })}
           >
-            <button
-              className="vendedor-assign-btn"
-              title="Asignar clientes"
-              onClick={(e) => { e.stopPropagation(); setAssignTarget(v.nombre); }}
-            >
-              +
-            </button>
-            <button
-              className="vendedor-delete-btn"
-              title="Eliminar vendedor"
-              onClick={(e) => { e.stopPropagation(); handleDelete(v); }}
-            >
-              &times;
-            </button>
-            <span className="stat-number">{v.clientCount}</span>
-            <span className="stat-label">{v.nombre}</span>
-          </div>
+            <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                title="Asignar clientes"
+                onClick={(e) => { e.stopPropagation(); setAssignTarget(v.nombre); }}
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive hover:text-destructive"
+                title="Eliminar vendedor"
+                onClick={(e) => { e.stopPropagation(); handleDelete(v); }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <div className="text-3xl font-bold">{v.clientCount}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">{v.nombre}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 

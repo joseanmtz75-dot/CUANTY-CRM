@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { getClients, bulkAssignClients } from '../api/clients';
-
-const TABS = [
-  { key: 'empresa', label: 'Por empresa' },
-  { key: 'manual', label: 'Selección manual' },
-  { key: 'todos', label: 'Todos sin asignar' },
-];
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Check } from 'lucide-react';
 
 export default function BulkAssignModal({ vendedorNombre, onClose, onSuccess }) {
   const [tab, setTab] = useState('empresa');
@@ -13,13 +15,8 @@ export default function BulkAssignModal({ vendedorNombre, onClose, onSuccess }) 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
-
-  // empresa tab
   const [selectedEmpresa, setSelectedEmpresa] = useState('');
-
-  // manual tab
   const [selected, setSelected] = useState(new Set());
-
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -33,26 +30,15 @@ export default function BulkAssignModal({ vendedorNombre, onClose, onSuccess }) 
   }, []);
 
   const empresas = [...new Set(clients.map(c => c.empresa).filter(Boolean))].sort();
-
-  const clientsOfEmpresa = selectedEmpresa
-    ? clients.filter(c => c.empresa === selectedEmpresa)
-    : [];
+  const clientsOfEmpresa = selectedEmpresa ? clients.filter(c => c.empresa === selectedEmpresa) : [];
 
   const toggleAll = () => {
-    if (selected.size === clients.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(clients.map(c => c.id)));
-    }
+    if (selected.size === clients.length) setSelected(new Set());
+    else setSelected(new Set(clients.map(c => c.id)));
   };
 
   const toggleOne = (id) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   };
 
   const handleAssign = async () => {
@@ -86,147 +72,122 @@ export default function BulkAssignModal({ vendedorNombre, onClose, onSuccess }) 
 
   if (result !== null) {
     return (
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal" onClick={e => e.stopPropagation()}>
-          <div className="modal-header">
-            <h3>Asignación completada</h3>
-            <button className="btn-close" onClick={onClose}>&times;</button>
+      <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Asignacion completada</DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-6">
+            <Check className="h-12 w-12 mx-auto text-green-600 mb-3" />
+            <p className="text-lg">
+              Se asignaron <strong>{result}</strong> clientes a <strong>{vendedorNombre}</strong>
+            </p>
           </div>
-          <p style={{ textAlign: 'center', fontSize: '1.1rem', margin: '1.5rem 0' }}>
-            Se asignaron <strong>{result}</strong> clientes a <strong>{vendedorNombre}</strong>
-          </p>
-          <div className="form-actions">
-            <button className="btn btn-primary" onClick={() => { onSuccess(); onClose(); }}>
-              Aceptar
-            </button>
-          </div>
-        </div>
-      </div>
+          <DialogFooter>
+            <Button onClick={() => { onSuccess(); onClose(); }}>Aceptar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-large" onClick={e => e.stopPropagation()} style={{ maxWidth: '640px' }}>
-        <div className="modal-header">
-          <h3>Asignar clientes a: {vendedorNombre}</h3>
-          <button className="btn-close" onClick={onClose}>&times;</button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-[640px]">
+        <DialogHeader>
+          <DialogTitle>Asignar clientes a: {vendedorNombre}</DialogTitle>
+        </DialogHeader>
 
-        <div className="bulk-assign-tabs">
-          {TABS.map(t => (
-            <button
-              key={t.key}
-              className={`bulk-assign-tab${tab === t.key ? ' active' : ''}`}
-              onClick={() => setTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="w-full">
+            <TabsTrigger value="empresa" className="flex-1">Por empresa</TabsTrigger>
+            <TabsTrigger value="manual" className="flex-1">Seleccion manual</TabsTrigger>
+            <TabsTrigger value="todos" className="flex-1">Todos sin asignar</TabsTrigger>
+          </TabsList>
 
-        <div className="import-step" style={{ minHeight: 180, marginTop: '1rem' }}>
-          {error ? (
-            <div className="error-banner">{error}</div>
-          ) : loading ? (
-            <p className="loading">Cargando clientes...</p>
-          ) : clients.length === 0 ? (
-            <p className="empty">No hay clientes sin asignar</p>
-          ) : (
-            <>
-              {tab === 'empresa' && (
-                <div>
-                  <div className="form-group">
-                    <label>Empresa</label>
-                    <select
-                      value={selectedEmpresa}
-                      onChange={e => setSelectedEmpresa(e.target.value)}
-                    >
-                      <option value="">-- Seleccionar empresa --</option>
-                      {empresas.map(emp => {
-                        const count = clients.filter(c => c.empresa === emp).length;
-                        return (
-                          <option key={emp} value={emp}>
-                            {emp} ({count} cliente{count !== 1 ? 's' : ''})
-                          </option>
-                        );
-                      })}
-                    </select>
+          <div className="mt-4 min-h-[180px]">
+            {error ? (
+              <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-3 py-2">{error}</div>
+            ) : loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-lg" />)}
+              </div>
+            ) : clients.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No hay clientes sin asignar</p>
+            ) : (
+              <>
+                <TabsContent value="empresa" className="mt-0">
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label>Empresa</Label>
+                      <select value={selectedEmpresa} onChange={e => setSelectedEmpresa(e.target.value)}
+                        className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                        <option value="">-- Seleccionar empresa --</option>
+                        {empresas.map(emp => {
+                          const count = clients.filter(c => c.empresa === emp).length;
+                          return <option key={emp} value={emp}>{emp} ({count} cliente{count !== 1 ? 's' : ''})</option>;
+                        })}
+                      </select>
+                    </div>
+                    {selectedEmpresa && (
+                      <p className="text-sm text-muted-foreground">
+                        Se asignaran <strong>{clientsOfEmpresa.length}</strong> cliente{clientsOfEmpresa.length !== 1 ? 's' : ''} de <strong>{selectedEmpresa}</strong> a <strong>{vendedorNombre}</strong>
+                      </p>
+                    )}
                   </div>
-                  {selectedEmpresa && (
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                      Se asignarán <strong>{clientsOfEmpresa.length}</strong> cliente{clientsOfEmpresa.length !== 1 ? 's' : ''} de <strong>{selectedEmpresa}</strong> a <strong>{vendedorNombre}</strong>
-                    </p>
-                  )}
-                </div>
-              )}
+                </TabsContent>
 
-              {tab === 'manual' && (
-                <div>
-                  <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-tertiary)' }}>
-                      {selected.size} seleccionado{selected.size !== 1 ? 's' : ''}
-                    </span>
-                    <button className="btn btn-sm btn-secondary" onClick={toggleAll}>
+                <TabsContent value="manual" className="mt-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground">{selected.size} seleccionado{selected.size !== 1 ? 's' : ''}</span>
+                    <Button variant="outline" size="sm" onClick={toggleAll}>
                       {selected.size === clients.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
-                    </button>
+                    </Button>
                   </div>
-                  <div className="bulk-assign-clients">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th style={{ width: '40px' }}></th>
-                          <th>Nombre</th>
-                          <th>Teléfono</th>
-                          <th>Empresa</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                  <ScrollArea className="max-h-[300px] border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-10"></TableHead>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Telefono</TableHead>
+                          <TableHead>Empresa</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {clients.map(c => (
-                          <tr key={c.id} onClick={() => toggleOne(c.id)} style={{ cursor: 'pointer' }}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={selected.has(c.id)}
-                                onChange={() => toggleOne(c.id)}
-                              />
-                            </td>
-                            <td>{c.nombre}</td>
-                            <td>{c.telefono}</td>
-                            <td>{c.empresa || '—'}</td>
-                          </tr>
+                          <TableRow key={c.id} className="cursor-pointer" onClick={() => toggleOne(c.id)}>
+                            <TableCell><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleOne(c.id)} /></TableCell>
+                            <TableCell className="font-medium">{c.nombre}</TableCell>
+                            <TableCell>{c.telefono}</TableCell>
+                            <TableCell>{c.empresa || '—'}</TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="todos" className="mt-0">
+                  <div className="text-center py-6">
+                    <p className="text-sm mb-1">
+                      Se asignaran <strong>{clients.length}</strong> cliente{clients.length !== 1 ? 's' : ''} sin asignar a <strong>{vendedorNombre}</strong>
+                    </p>
+                    <p className="text-xs text-muted-foreground">Esta accion no se puede deshacer facilmente.</p>
                   </div>
-                </div>
-              )}
+                </TabsContent>
+              </>
+            )}
+          </div>
+        </Tabs>
 
-              {tab === 'todos' && (
-                <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                  <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>
-                    Se asignarán <strong>{clients.length}</strong> cliente{clients.length !== 1 ? 's' : ''} sin asignar a <strong>{vendedorNombre}</strong>
-                  </p>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--color-text-tertiary)' }}>
-                    Esta acción no se puede deshacer fácilmente.
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="form-actions">
-          <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
-          <button
-            className="btn btn-primary"
-            onClick={handleAssign}
-            disabled={!canSubmit()}
-          >
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleAssign} disabled={!canSubmit()}>
             {submitting ? 'Asignando...' : 'Asignar'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

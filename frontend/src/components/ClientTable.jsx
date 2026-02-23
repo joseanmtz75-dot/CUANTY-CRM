@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getClients, getSuggestions, createClient, updateClient, deleteClient } from '../api/clients';
 import { ACTIVE_STATUSES, computeTemperatura } from '../utils/constants';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableBody, TableRow, TableHead } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Plus, Upload, X, Search } from 'lucide-react';
 import ClientRow from './ClientRow';
 import ClientForm from './ClientForm';
 import ImportModal from './ImportModal';
@@ -34,12 +40,11 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
     setLoading(true);
     setError(null);
 
-    const handleError = (err) => {
+    const handleError = () => {
       setClients([]);
-      setError('Error al cargar clientes. Verifica tu conexión.');
+      setError('Error al cargar clientes. Verifica tu conexion.');
     };
 
-    // Special fetch for temperatura filter
     if (initialFilter?.type === 'temperatura') {
       getClients({ incluirDescartados: false })
         .then(all => {
@@ -54,7 +59,6 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
       return;
     }
 
-    // Special fetch for sugerencia filter
     if (initialFilter?.type === 'sugerencia') {
       getSuggestions()
         .then(data => setClients(data[initialFilter.value] || []))
@@ -63,7 +67,6 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
       return;
     }
 
-    // Server-side disposition filter
     if (initialFilter?.type === 'disposition') {
       getClients({ incluirDescartados: false, disposition: initialFilter.value })
         .then(setClients)
@@ -72,7 +75,6 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
       return;
     }
 
-    // Server-side vendedor filter
     if (initialFilter?.type === 'vendedor') {
       getClients({ incluirDescartados: false, vendedor: initialFilter.value })
         .then(setClients)
@@ -95,7 +97,6 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
     fetchClients();
   }, [filtro, showDescartados, initialFilter]);
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => fetchClients(), 400);
     return () => clearTimeout(timer);
@@ -137,104 +138,129 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
   };
 
   return (
-    <div className="client-table-container">
-      <div className="table-header">
-        <h2>Clientes</h2>
-        <div className="table-header-actions">
-          <button className="btn btn-secondary" onClick={() => setShowImportModal(true)}>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImportModal(true)}>
+            <Upload className="h-4 w-4 mr-2" />
             Importar
-          </button>
-          <button className="btn btn-primary" onClick={handleNew}>
-            + Nuevo Cliente
-          </button>
+          </Button>
+          <Button onClick={handleNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Cliente
+          </Button>
         </div>
       </div>
 
-      <div className="search-bar">
-        <input
-          className="search-input"
-          type="text"
-          placeholder="Buscar por nombre, telefono, email o empresa..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select className="sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+      {/* Search */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            className="w-full h-9 pl-9 pr-3 rounded-lg border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            type="text"
+            placeholder="Buscar por nombre, telefono, email o empresa..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <select
+          className="h-9 rounded-lg border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
           <option value="fecha">Fecha</option>
           <option value="prioridad">Prioridad</option>
         </select>
       </div>
 
+      {/* Active filter chip */}
       {initialFilter && (
-        <div className="active-filter-bar">
-          <span className="filter-chip">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1">
             Filtro: {initialFilter.label || initialFilter.value}
-            <button className="filter-chip-clear" onClick={() => { onClearFilter(); setFiltro('Todos'); }}>&times;</button>
-          </span>
-          <span className="filter-result-count">{clients.length} resultado{clients.length !== 1 ? 's' : ''}</span>
+            <button onClick={() => { onClearFilter(); setFiltro('Todos'); }}><X className="h-3 w-3" /></button>
+          </Badge>
+          <span className="text-xs text-muted-foreground">{clients.length} resultado{clients.length !== 1 ? 's' : ''}</span>
         </div>
       )}
 
-      <div className="filters">
+      {/* Filters */}
+      <div className="flex gap-1.5 flex-wrap">
         {FILTER_ESTATUSES.map(s => (
-          <button
+          <Button
             key={s}
-            className={`btn btn-filter ${filtro === s ? 'active' : ''}`}
+            variant={filtro === s ? 'default' : 'outline'}
+            size="sm"
+            className="rounded-full h-7 text-xs"
             onClick={() => { setFiltro(s); if (onClearFilter) onClearFilter(); }}
           >
             {s}
-          </button>
+          </Button>
         ))}
       </div>
 
-      <div className="toggle-row">
+      {/* Descartados toggle */}
+      <div className="flex items-center gap-2">
         <input
           type="checkbox"
           id="showDescartados"
+          className="rounded"
           checked={showDescartados}
           onChange={(e) => setShowDescartados(e.target.checked)}
         />
-        <label className="toggle-label" htmlFor="showDescartados">Mostrar descartados</label>
+        <label className="text-sm text-muted-foreground" htmlFor="showDescartados">Mostrar descartados</label>
       </div>
 
       {error && (
-        <div className="error-banner">
+        <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-4 py-3 flex items-center gap-2">
           {error}
-          <button className="btn btn-sm btn-secondary" onClick={fetchClients} style={{ marginLeft: '0.5rem' }}>Reintentar</button>
+          <Button variant="outline" size="sm" onClick={fetchClients}>Reintentar</Button>
         </div>
       )}
 
+      {/* Table */}
       {loading ? (
-        <p className="loading">Cargando clientes...</p>
-      ) : clients.length === 0 && !error ? (
-        <p className="empty">No se encontraron clientes.</p>
-      ) : (
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Telefono</th>
-                <th>Empresa</th>
-                <th>Estatus</th>
-                <th>Prox. Contacto</th>
-                <th>Ult. Contacto</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedClients.map(client => (
-                <ClientRow
-                  key={client.id}
-                  client={client}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onHistory={setHistoryClient}
-                  onIntelligence={setIntelligenceClient}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
         </div>
+      ) : clients.length === 0 && !error ? (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            No se encontraron clientes.
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[18%]">Nombre</TableHead>
+                  <TableHead className="w-[12%]">Telefono</TableHead>
+                  <TableHead className="w-[14%]">Empresa</TableHead>
+                  <TableHead className="w-[16%]">Estatus</TableHead>
+                  <TableHead className="w-[14%]">Prox. Contacto</TableHead>
+                  <TableHead className="w-[10%]">Ult. Contacto</TableHead>
+                  <TableHead className="w-[16%]">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedClients.map(client => (
+                  <ClientRow
+                    key={client.id}
+                    client={client}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onHistory={setHistoryClient}
+                    onIntelligence={setIntelligenceClient}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       )}
 
       {showForm && (

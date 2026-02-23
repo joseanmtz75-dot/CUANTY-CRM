@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getInteractions } from '../api/clients';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const TYPE_ICONS = {
   llamada: 'T',
@@ -32,61 +37,56 @@ export default function InteractionHistory({ client, onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal history-modal">
-        <div className="modal-header">
-          <h3>Historial — {client.nombre}</h3>
-          <button className="btn-close" onClick={onClose}>&times;</button>
-        </div>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-[600px] max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Historial — {client.nombre}</DialogTitle>
+        </DialogHeader>
 
-        {error && <div className="error-banner">{error}</div>}
+        {error && <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-3 py-2">{error}</div>}
 
         {loading ? (
-          <p className="loading">Cargando historial...</p>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
+          </div>
         ) : data.interactions.length === 0 && !error ? (
-          <p className="history-empty">No hay interacciones registradas.</p>
+          <p className="text-sm text-muted-foreground text-center py-8">No hay interacciones registradas.</p>
         ) : (
           <>
-            <div className="history-list">
-              {data.interactions.map((item) => (
-                <div key={item.id} className="history-item">
-                  <div className="history-icon">{TYPE_ICONS[item.tipo] || '?'}</div>
-                  <div className="history-content">
-                    <div className="history-meta">
-                      <span className="history-type">{item.tipo}</span>
-                      {item.resultado && <span className="history-result">{item.resultado}</span>}
-                      <span className="history-date">{formatDate(item.createdAt)}</span>
+            <ScrollArea className="flex-1">
+              <div className="space-y-3">
+                {data.interactions.map((item) => (
+                  <div key={item.id} className="flex gap-3 py-3 border-b last:border-0">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold shrink-0">
+                      {TYPE_ICONS[item.tipo] || '?'}
                     </div>
-                    <div className="history-text">{item.contenido}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px]">{item.tipo}</Badge>
+                        {item.resultado && <Badge variant="outline" className="text-[10px]">{item.resultado}</Badge>}
+                        <span className="text-xs text-muted-foreground">{formatDate(item.createdAt)}</span>
+                      </div>
+                      <p className="text-sm mt-1">{item.contenido}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
 
             {data.totalPages > 1 && (
-              <div className="history-pagination">
-                <button
-                  className="btn btn-sm btn-secondary"
-                  disabled={data.page <= 1}
-                  onClick={() => fetchPage(data.page - 1)}
-                >
+              <div className="flex items-center justify-between pt-3 border-t">
+                <Button variant="outline" size="sm" disabled={data.page <= 1} onClick={() => fetchPage(data.page - 1)}>
                   Anterior
-                </button>
-                <span style={{ fontSize: '0.82rem', color: '#8c8c8c', alignSelf: 'center' }}>
-                  {data.page} / {data.totalPages}
-                </span>
-                <button
-                  className="btn btn-sm btn-secondary"
-                  disabled={data.page >= data.totalPages}
-                  onClick={() => fetchPage(data.page + 1)}
-                >
+                </Button>
+                <span className="text-xs text-muted-foreground">{data.page} / {data.totalPages}</span>
+                <Button variant="outline" size="sm" disabled={data.page >= data.totalPages} onClick={() => fetchPage(data.page + 1)}>
                   Siguiente
-                </button>
+                </Button>
               </div>
             )}
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

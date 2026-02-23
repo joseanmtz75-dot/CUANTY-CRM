@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { formatName, formatPhone } from '../utils/formatters';
 import { ESTATUSES, ORIGENES, ROLES } from '../utils/constants';
 import { getVendedores } from '../api/clients';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const emptyForm = {
   nombre: '',
@@ -83,150 +87,107 @@ export default function ClientForm({ client, onSave, onCancel }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <h3>{client ? 'Editar Cliente' : 'Nuevo Cliente'}</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Nombre *</label>
-            <input
-              name="nombre"
-              value={form.nombre}
-              onChange={handleChange}
-              placeholder="Nombre del cliente"
-            />
-            {errors.nombre && <span className="field-error">{errors.nombre}</span>}
+    <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{client ? 'Editar Cliente' : 'Nuevo Cliente'}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Nombre *</Label>
+            <input name="nombre" value={form.nombre} onChange={handleChange} placeholder="Nombre del cliente"
+              className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+            {errors.nombre && <p className="text-xs text-destructive">{errors.nombre}</p>}
           </div>
 
-          <div className="form-group">
-            <label>Telefono *</label>
-            <input
-              name="telefono"
-              value={form.telefono}
-              onChange={handleChange}
-              placeholder="Telefono"
-            />
-            {errors.telefono && <span className="field-error">{errors.telefono}</span>}
+          <div className="space-y-1.5">
+            <Label>Telefono *</Label>
+            <input name="telefono" value={form.telefono} onChange={handleChange} placeholder="Telefono"
+              className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+            {errors.telefono && <p className="text-xs text-destructive">{errors.telefono}</p>}
           </div>
 
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="correo@ejemplo.com"
-            />
+          <div className="space-y-1.5">
+            <Label>Email</Label>
+            <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="correo@ejemplo.com"
+              className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
           </div>
 
-          <div className="form-group">
-            <label>Empresa</label>
-            <input
-              name="empresa"
-              value={form.empresa}
-              onChange={handleChange}
-              placeholder="Nombre de la empresa"
-            />
+          <div className="space-y-1.5">
+            <Label>Empresa</Label>
+            <input name="empresa" value={form.empresa} onChange={handleChange} placeholder="Nombre de la empresa"
+              className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
           </div>
 
-          <div className="form-group">
-            <label>Vendedor</label>
-            <select name="vendedor" value={form.vendedor} onChange={handleChange}>
+          <div className="space-y-1.5">
+            <Label>Vendedor</Label>
+            <select name="vendedor" value={form.vendedor} onChange={handleChange}
+              className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring">
               <option value="">-- Sin asignar --</option>
-              {vendedores.map(v => (
-                <option key={v.id} value={v.nombre}>{v.nombre}</option>
-              ))}
+              {vendedores.map(v => <option key={v.id} value={v.nombre}>{v.nombre}</option>)}
             </select>
-            {vendedorError && <span className="field-error">{vendedorError}</span>}
+            {vendedorError && <p className="text-xs text-destructive">{vendedorError}</p>}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Rol en empresa</label>
-              <select name="rol" value={form.rol} onChange={handleChange}>
-                {ROLES.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Rol en empresa</Label>
+              <select name="rol" value={form.rol} onChange={handleChange}
+                className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
-
             {form.rol === 'otro' && (
-              <div className="form-group">
-                <label>Especificar rol</label>
-                <input
-                  name="rolPersonalizado"
-                  value={form.rolPersonalizado}
-                  onChange={handleChange}
-                  placeholder="Ej: Logistica, Almacen..."
-                />
+              <div className="space-y-1.5">
+                <Label>Especificar rol</Label>
+                <input name="rolPersonalizado" value={form.rolPersonalizado} onChange={handleChange} placeholder="Ej: Logistica, Almacen..."
+                  className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
               </div>
             )}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Estatus</label>
-              <select name="estatus" value={form.estatus} onChange={handleChange}>
-                {ESTATUSES.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Estatus</Label>
+              <select name="estatus" value={form.estatus} onChange={handleChange}
+                className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                {ESTATUSES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-
-            <div className="form-group">
-              <label>Origen</label>
-              <select name="origen" value={form.origen} onChange={handleChange}>
+            <div className="space-y-1.5">
+              <Label>Origen</Label>
+              <select name="origen" value={form.origen} onChange={handleChange}
+                className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring">
                 <option value="">-- Seleccionar --</option>
-                {ORIGENES.map(o => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
+                {ORIGENES.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Proximo contacto</label>
-            <input
-              name="proximoContacto"
-              type="date"
-              value={form.proximoContacto}
-              onChange={handleChange}
-            />
+          <div className="space-y-1.5">
+            <Label>Proximo contacto</Label>
+            <input name="proximoContacto" type="date" value={form.proximoContacto} onChange={handleChange}
+              className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
           </div>
 
-          <div className="form-group">
-            <label>Nota de proxima accion</label>
-            <textarea
-              name="nextActionNote"
-              value={form.nextActionNote}
-              onChange={handleChange}
-              placeholder="¿Que hacer en el proximo contacto?"
-              rows={2}
-            />
+          <div className="space-y-1.5">
+            <Label>Nota de proxima accion</Label>
+            <Textarea name="nextActionNote" value={form.nextActionNote} onChange={handleChange}
+              placeholder="Que hacer en el proximo contacto?" rows={2} />
           </div>
 
-          <div className="form-group">
-            <label>Notas</label>
-            <textarea
-              name="notas"
-              value={form.notas}
-              onChange={handleChange}
-              placeholder="Notas generales del cliente..."
-              rows={3}
-            />
+          <div className="space-y-1.5">
+            <Label>Notas</Label>
+            <Textarea name="notas" value={form.notas} onChange={handleChange}
+              placeholder="Notas generales del cliente..." rows={3} />
           </div>
 
-          <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onCancel}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn btn-primary">
-              {client ? 'Guardar Cambios' : 'Crear Cliente'}
-            </button>
-          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+            <Button type="submit">{client ? 'Guardar Cambios' : 'Crear Cliente'}</Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
