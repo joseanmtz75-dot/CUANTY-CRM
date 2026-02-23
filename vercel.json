@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --omit=dev",
+  "installCommand": "npm install",
   "buildCommand": "npm run build -w backend && npm run build -w frontend",
   "outputDirectory": "frontend/dist",
   "framework": null,
