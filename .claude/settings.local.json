@@ -4,7 +4,11 @@
       "Bash(sort:*)",
       "Bash(cd:*)",
       "Bash(cd \"C:/Users/PC/Documents/CRM-CLIENTES/frontend\" && npx shadcn@latest add button input label textarea card badge separator dialog select tabs table skeleton checkbox scroll-area avatar sheet tooltip dropdown-menu --yes 2>&1)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(python:*)",
+      "Bash(rm:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx vite:*)"
     ]
   }
 }
