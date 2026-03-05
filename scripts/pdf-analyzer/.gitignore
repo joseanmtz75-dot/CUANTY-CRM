@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+data/analisis.db
+output/*.log
+output/*.csv
+output/*.txt
+!output/.gitkeep
+!data/.gitkeep
