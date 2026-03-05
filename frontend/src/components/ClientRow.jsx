@@ -29,6 +29,14 @@ function getRolBadgeLabel(client) {
   return found ? found.label.substring(0, 3).toUpperCase() : client.rol.substring(0, 3).toUpperCase();
 }
 
+function toWhatsAppUrl(telefono) {
+  if (!telefono) return null;
+  let digits = telefono.replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) digits = digits.slice(1);
+  if (digits.length === 10) digits = '52' + digits;
+  return `https://wa.me/${digits}`;
+}
+
 function ClientRow({ client, onEdit, onDelete, onHistory, onIntelligence }) {
   const temp = computeTemperatura(client);
   const disp = client.metrics?.disposition;
@@ -44,7 +52,18 @@ function ClientRow({ client, onEdit, onDelete, onHistory, onIntelligence }) {
           <Badge variant="outline" className="ml-1.5 text-[9px] px-1 py-0 font-bold">{rolLabel}</Badge>
         )}
       </TableCell>
-      <TableCell className="text-sm">{client.telefono}</TableCell>
+      <TableCell className="text-sm">
+        {client.telefono ? (
+          <a
+            href={toWhatsAppUrl(client.telefono)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-green-600 hover:text-green-800 hover:underline"
+          >
+            {client.telefono}
+          </a>
+        ) : '-'}
+      </TableCell>
       <TableCell className="text-sm text-muted-foreground">{client.empresa || '-'}</TableCell>
       <TableCell>
         <div className="flex items-center gap-1.5 flex-wrap">
