@@ -22,6 +22,10 @@ model Client {
   proximoContacto  DateTime?
   ultimoContacto   DateTime?
   contactoManual   Boolean            @default(false)
+  clasificacion        String?
+  productosFrecuentes  String?
+  totalComprasPdf      Float?
+  totalDocumentosPdf   Int?
   createdAt        DateTime           @default(now())
   interactions     Interaction[]
   metrics          ClientMetrics?
