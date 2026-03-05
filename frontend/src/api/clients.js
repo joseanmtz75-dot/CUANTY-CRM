@@ -13,6 +13,7 @@ export const getClients = (filters = {}) => {
     if (filters.incluirDescartados) params.incluirDescartados = 'true';
     if (filters.vendedor) params.vendedor = filters.vendedor;
     if (filters.disposition) params.disposition = filters.disposition;
+    if (filters.clasificacion) params.clasificacion = filters.clasificacion;
   }
   return API.get('/clients', { params }).then(res => res.data);
 };

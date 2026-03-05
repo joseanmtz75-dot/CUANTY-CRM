@@ -89,7 +89,7 @@ function createClientsRouter(prisma) {
   // GET /clients
   router.get('/', async (req, res) => {
     try {
-      const { estatus, search, incluirDescartados, vendedor, disposition } = req.query;
+      const { estatus, search, incluirDescartados, vendedor, disposition, clasificacion } = req.query;
       const where = {};
 
       if (estatus) {
@@ -98,12 +98,17 @@ function createClientsRouter(prisma) {
         where.estatus = { notIn: ['Descartado'] };
       }
 
+      if (clasificacion) {
+        where.clasificacion = clasificacion;
+      }
+
       if (search) {
         where.OR = [
           { nombre: { contains: search, mode: 'insensitive' } },
           { telefono: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
           { empresa: { contains: search, mode: 'insensitive' } },
+          { productosFrecuentes: { contains: search, mode: 'insensitive' } },
         ];
       }
 

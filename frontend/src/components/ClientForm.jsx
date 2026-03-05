@@ -176,6 +176,29 @@ export default function ClientForm({ client, onSave, onCancel }) {
               placeholder="Que hacer en el proximo contacto?" rows={2} />
           </div>
 
+          {client?.clasificacion && (
+            <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
+              <Label className="text-muted-foreground text-xs">Datos PDF Analyzer</Label>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge
+                  className="text-white"
+                  style={{ backgroundColor: client.clasificacion === 'ALTO' ? '#16a34a' : client.clasificacion === 'MEDIO' ? '#d97706' : '#6b7280' }}
+                >
+                  {client.clasificacion}
+                </Badge>
+                {client.totalDocumentosPdf != null && (
+                  <span className="text-xs text-muted-foreground">{client.totalDocumentosPdf} docs</span>
+                )}
+                {client.totalComprasPdf != null && (
+                  <span className="text-xs text-muted-foreground">${client.totalComprasPdf.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</span>
+                )}
+              </div>
+              {client.productosFrecuentes && (
+                <p className="text-xs text-muted-foreground">Productos: {client.productosFrecuentes}</p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>Notas</Label>
             <Textarea name="notas" value={form.notas} onChange={handleChange}

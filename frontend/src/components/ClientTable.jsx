@@ -27,6 +27,7 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
   const [historyClient, setHistoryClient] = useState(null);
   const [intelligenceClient, setIntelligenceClient] = useState(null);
   const [sortBy, setSortBy] = useState('fecha');
+  const [clasificacionFilter, setClasificacionFilter] = useState('');
   const [error, setError] = useState(null);
 
   const sortedClients = useMemo(() => {
@@ -87,6 +88,7 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
     if (filtro !== 'Todos') filters.estatus = filtro;
     if (search.trim()) filters.search = search.trim();
     if (showDescartados) filters.incluirDescartados = true;
+    if (clasificacionFilter) filters.clasificacion = clasificacionFilter;
     getClients(filters)
       .then(setClients)
       .catch(handleError)
@@ -95,7 +97,7 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
 
   useEffect(() => {
     fetchClients();
-  }, [filtro, showDescartados, initialFilter]);
+  }, [filtro, showDescartados, initialFilter, clasificacionFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchClients(), 400);
@@ -165,6 +167,16 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <select
+          className="h-9 rounded-lg border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          value={clasificacionFilter}
+          onChange={(e) => setClasificacionFilter(e.target.value)}
+        >
+          <option value="">Clasificacion</option>
+          <option value="ALTO">ALTO</option>
+          <option value="MEDIO">MEDIO</option>
+          <option value="BAJO">BAJO</option>
+        </select>
         <select
           className="h-9 rounded-lg border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           value={sortBy}

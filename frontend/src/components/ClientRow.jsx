@@ -86,6 +86,15 @@ function ClientRow({ client, onEdit, onDelete, onHistory, onIntelligence }) {
           <Badge className="text-white text-[10px]" style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#8c8c8c' }}>
             {client.estatus}
           </Badge>
+          {client.clasificacion && (
+            <Badge
+              className="text-white text-[10px]"
+              style={{ backgroundColor: client.clasificacion === 'ALTO' ? '#16a34a' : client.clasificacion === 'MEDIO' ? '#d97706' : '#6b7280' }}
+              title={`Clasificacion PDF: ${client.clasificacion}`}
+            >
+              {client.clasificacion}
+            </Badge>
+          )}
           {client.metrics?.priorityScore != null && (
             <Badge
               variant="secondary"
