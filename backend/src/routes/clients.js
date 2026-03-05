@@ -100,10 +100,10 @@ function createClientsRouter(prisma) {
 
       if (search) {
         where.OR = [
-          { nombre: { contains: search } },
-          { telefono: { contains: search } },
-          { email: { contains: search } },
-          { empresa: { contains: search } },
+          { nombre: { contains: search, mode: 'insensitive' } },
+          { telefono: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { empresa: { contains: search, mode: 'insensitive' } },
         ];
       }
 
