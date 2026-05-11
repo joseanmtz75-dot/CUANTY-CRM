@@ -45,10 +45,15 @@ export const ORIGENES = ['Web', 'Referido', 'Redes Sociales', 'Llamada', 'Otro']
 
 export const ROLES = [
   { value: 'compras', label: 'Compras' },
-  { value: 'direccion', label: 'Direccion' },
+  { value: 'direccion', label: 'Direccion / Gerencia' },
   { value: 'administracion', label: 'Administracion' },
-  { value: 'tecnico', label: 'Tecnico' },
-  { value: 'otro', label: 'Otro' },
+  { value: 'finanzas', label: 'Finanzas / Contabilidad' },
+  { value: 'tecnico', label: 'Tecnico / Operaciones' },
+  { value: 'logistica', label: 'Logistica / Almacen' },
+  { value: 'ventas', label: 'Ventas (de su empresa)' },
+  { value: 'rrhh', label: 'Recursos Humanos' },
+  { value: 'recepcion', label: 'Recepcion / Asistente' },
+  { value: 'otro', label: 'Otro (especificar)' },
 ];
 
 export function computeTemperatura(client) {

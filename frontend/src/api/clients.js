@@ -16,11 +16,17 @@ export const getClients = (filters = {}) => {
     if (filters.clasificacion) params.clasificacion = filters.clasificacion;
     if (filters.clasificacionErp) params.clasificacionErp = filters.clasificacionErp;
     if (filters.rfc) params.rfc = filters.rfc;
+    if (filters.empresa) params.empresa = filters.empresa;
+    if (filters.rol) params.rol = filters.rol;
+    if (filters.excludeId != null) params.excludeId = filters.excludeId;
     if (filters.diasSinCompraErpMin != null) params.diasSinCompraErpMin = filters.diasSinCompraErpMin;
     if (filters.diasSinCompraErpMax != null) params.diasSinCompraErpMax = filters.diasSinCompraErpMax;
   }
   return API.get('/clients', { params }).then(res => res.data);
 };
+
+export const getClientesPorEmpresa = (empresa, excludeId) =>
+  getClients({ empresa, excludeId, incluirDescartados: false });
 
 export const createClient = (data) =>
   API.post('/clients', data).then(res => res.data);
