@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { updateClient, getInteractions, getVendedores } from '../../api/clients';
-import { ESTATUSES, formatMxn } from '../../utils/constants';
+import { ESTATUSES, ROLES, formatMxn } from '../../utils/constants';
+import { formatName, formatPhone } from '../../utils/formatters';
 
 function formatDate(iso) {
   if (!iso) return '';
@@ -14,6 +15,13 @@ function diasDesde(iso) {
 
 export default function ExpedientePanel({ client, onClose, onSaved }) {
   const [form, setForm] = useState({
+    nombre: client.nombre || '',
+    telefono: client.telefono || '',
+    email: client.email || '',
+    empresa: client.empresa || '',
+    rfc: client.rfc || '',
+    rol: client.rol || 'compras',
+    rolPersonalizado: client.rolPersonalizado || '',
     estatus: client.estatus || 'Nuevo',
     vendedor: client.vendedor || '',
     nextActionNote: client.nextActionNote || '',
@@ -46,14 +54,31 @@ export default function ExpedientePanel({ client, onClose, onSaved }) {
   };
 
   const handleSave = async () => {
+    if (!form.nombre.trim()) {
+      setError('El nombre es requerido');
+      return;
+    }
+    const telNormalizado = form.telefono ? formatPhone(form.telefono) : null;
+    if (form.telefono && !telNormalizado) {
+      setError('Teléfono inválido — debe ser un número mexicano de 10 dígitos');
+      return;
+    }
+
     setSaving(true);
     setError('');
     const payload = {
+      nombre: formatName(form.nombre),
+      email: form.email.trim() || null,
+      empresa: form.empresa.trim() || null,
+      rfc: form.rfc ? form.rfc.trim().toUpperCase() : null,
+      rol: form.rol,
+      rolPersonalizado: form.rol === 'otro' ? (form.rolPersonalizado.trim() || null) : null,
       estatus: form.estatus,
       vendedor: form.vendedor || null,
       nextActionNote: form.nextActionNote || null,
       notas: form.notas || null,
     };
+    if (telNormalizado) payload.telefono = telNormalizado;
     if (form.proximoContacto) {
       payload.proximoContacto = new Date(form.proximoContacto).toISOString();
       payload.contactoManual = true;
@@ -75,23 +100,74 @@ export default function ExpedientePanel({ client, onClose, onSaved }) {
       <div className="pd-overlay" onClick={onClose} />
       <aside className="pd-expediente" role="dialog" aria-modal="true">
         <div className="pd-exp-header">
-          <h3>Expediente · {client.nombre}</h3>
+          <h3>Expediente · {form.nombre || client.nombre}</h3>
           <button className="pd-exp-close" onClick={onClose} aria-label="Cerrar">×</button>
         </div>
 
         <div className="pd-exp-body">
           <section className="pd-exp-section">
-            <h4>Datos básicos</h4>
-            <div className="pd-exp-row"><strong>Empresa</strong><span>{client.empresa || '—'}</span></div>
-            <div className="pd-exp-row"><strong>Teléfono</strong><span>{client.telefono || '—'}</span></div>
-            <div className="pd-exp-row"><strong>Email</strong><span>{client.email || '—'}</span></div>
-            <div className="pd-exp-row"><strong>RFC</strong><span>{client.rfc || '—'}</span></div>
-            <div className="pd-exp-row"><strong>Estatus actual</strong><span>{client.estatus}</span></div>
+            <h4>Datos básicos (editables)</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input
+                name="nombre"
+                value={form.nombre}
+                onChange={handleChange}
+                placeholder="Nombre completo *"
+                className="pd-exp-input"
+              />
+              <input
+                name="telefono"
+                value={form.telefono}
+                onChange={handleChange}
+                placeholder="+52 33 1234 5678"
+                className="pd-exp-input"
+              />
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="correo@empresa.mx"
+                className="pd-exp-input"
+              />
+              <input
+                name="empresa"
+                value={form.empresa}
+                onChange={handleChange}
+                placeholder="Nombre de la empresa"
+                className="pd-exp-input"
+              />
+              <input
+                name="rfc"
+                value={form.rfc}
+                onChange={handleChange}
+                placeholder="RFC"
+                style={{ textTransform: 'uppercase' }}
+                className="pd-exp-input"
+              />
+            </div>
+          </section>
+
+          <section className="pd-exp-section">
+            <h4>Rol en la empresa</h4>
+            <select name="rol" value={form.rol} onChange={handleChange} className="pd-exp-select">
+              {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+            {form.rol === 'otro' && (
+              <input
+                name="rolPersonalizado"
+                value={form.rolPersonalizado}
+                onChange={handleChange}
+                placeholder="Especificar rol (ej: Logística, Almacén…)"
+                className="pd-exp-input"
+                style={{ marginTop: 6 }}
+              />
+            )}
           </section>
 
           {(client.clasificacionErp || client.totalComprasErp || client.productosFrecuentesErp) && (
             <section className="pd-exp-section">
-              <h4>Historia ERP</h4>
+              <h4>Historia ERP (solo lectura)</h4>
               {client.clasificacionErp && (
                 <div className="pd-exp-row"><strong>Clasificación</strong><span>{client.clasificacionErp}</span></div>
               )}
