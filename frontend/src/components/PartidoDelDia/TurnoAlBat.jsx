@@ -310,9 +310,9 @@ function BalkPanel({ client, onClose, onResolved }) {
 
   useEffect(() => {
     getVendedores()
-      .then(d => setVendedores((d.vendedores || []).filter(v => v.nombre !== client.vendedor)))
+      .then(d => setVendedores(d.vendedores || []))
       .catch(() => setVendedores([]));
-  }, [client.vendedor]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -324,9 +324,10 @@ function BalkPanel({ client, onClose, onResolved }) {
     if (!target) { setError('Selecciona un vendedor'); return; }
     setBusy(true);
     setError('');
+    const vendedorValue = target === '__sin_asignar__' ? '' : target;
     try {
-      await bulkAssignClients({ mode: 'manual', vendedor: target, clientIds: [client.clientId] });
-      onResolved({ type: 'reasignar', target });
+      await bulkAssignClients({ mode: 'manual', vendedor: vendedorValue, clientIds: [client.clientId] });
+      onResolved({ type: 'reasignar', target: vendedorValue || '(sin asignar)' });
     } catch (err) {
       setError(err.response?.data?.error || err.message);
     } finally {
@@ -362,9 +363,19 @@ function BalkPanel({ client, onClose, onResolved }) {
 
           <div className="pd-balk-section">
             <h5>Reasignar a otro vendedor</h5>
+            {client.vendedor && (
+              <p style={{ fontSize: 11, color: 'var(--pd-ink-mute)', margin: 0 }}>
+                Actualmente asignado a: <strong>{client.vendedor}</strong>
+              </p>
+            )}
             <select className="pd-exp-select" value={target} onChange={(e) => setTarget(e.target.value)} disabled={busy}>
               <option value="">— Selecciona vendedor —</option>
-              {vendedores.map(v => <option key={v.id} value={v.nombre}>{v.nombre}</option>)}
+              <option value="__sin_asignar__">— Sin asignar —</option>
+              {vendedores.map(v => (
+                <option key={v.id} value={v.nombre}>
+                  {v.nombre}{v.nombre === client.vendedor ? ' (actual)' : ''}
+                </option>
+              ))}
             </select>
             <button className="pd-btn-save" disabled={busy || !target} onClick={handleReasignar}>
               {busy ? 'Reasignando…' : 'Reasignar y anular turno'}
