@@ -13,27 +13,39 @@ jobs:
     steps:
       - name: Trigger sync against CRM
         id: trigger
+        shell: bash
         env:
           CRM_URL: ${{ secrets.CRM_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           if [ -z "${CRM_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
             echo "::error::Falta secret CRM_URL o CRON_SECRET"
             exit 1
           fi
 
           echo "POST $CRM_URL/api/cron/sync-erp?apply=true"
-          curl --fail-with-body --max-time 240 \
+          http_code=$(curl --max-time 240 -sS \
             -X POST "$CRM_URL/api/cron/sync-erp?apply=true" \
             -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json" \
-            -o response.json
+            -o response.json \
+            -w "%{http_code}")
 
+          echo "HTTP $http_code"
           echo "::group::Raw response"
-          cat response.json
-          echo
+          if [ -s response.json ]; then
+            cat response.json
+            echo
+          else
+            echo "(response.json vacío o ausente)"
+          fi
           echo "::endgroup::"
+
+          if [ "$http_code" -ge 400 ]; then
+            echo "::error::CRM respondió HTTP $http_code — ver body arriba"
+            exit 1
+          fi
 
       - name: Parse summary and fail on recompute errors
         run: |
