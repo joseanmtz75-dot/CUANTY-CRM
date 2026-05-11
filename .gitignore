@@ -7,3 +7,4 @@ nul
 tmp_*.json
 
 .vercel
+.env*.local
