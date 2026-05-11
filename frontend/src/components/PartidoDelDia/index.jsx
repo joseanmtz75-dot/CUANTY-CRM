@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getDailyPlan, logInteraction } from '../../api/clients';
 import {
   distribuirEnInnings,
@@ -22,6 +22,9 @@ export default function PartidoDelDia() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lineup, setLineup] = useState([]);
+  // innings vive como state mutable: las sustituciones reemplazan in-place sin
+  // re-distribuir (queremos que el sustituto herede la posición del original).
+  const [innings, setInnings] = useState([[], [], []]);
   const [state, setState] = useState({
     fase: 'dugout',
     inningActual: 0,
@@ -29,12 +32,12 @@ export default function PartidoDelDia() {
     siguienteInning: null,
     resultados: [], // { clienteId, cliente, outcome, inning, timestamp, detalle }
     balks: [],      // { clienteId, cliente, resolution, timestamp }
+    cambios: [],    // { clienteId, cliente, rolNuevo, rolPersonalizado, type, substituteId, timestamp }
     iniciadoEn: null,
   });
   const [recordSemana, setRecordSemana] = useState(() => loadRecordSemana());
   const [registrando, setRegistrando] = useState(false);
 
-  const innings = useMemo(() => distribuirEnInnings(lineup), [lineup]);
   const totalTurnos = innings.reduce((acc, i) => acc + i.length, 0);
 
   const cargarLineup = useCallback(async () => {
@@ -42,10 +45,13 @@ export default function PartidoDelDia() {
     setError(null);
     try {
       const data = await getDailyPlan(15);
-      setLineup(data.listaDelDia || []);
+      const lista = data.listaDelDia || [];
+      setLineup(lista);
+      setInnings(distribuirEnInnings(lista));
     } catch (err) {
       setError(err.response?.data?.error || err.message);
       setLineup([]);
+      setInnings([[], [], []]);
     } finally {
       setLoading(false);
     }
@@ -53,13 +59,12 @@ export default function PartidoDelDia() {
 
   useEffect(() => { cargarLineup(); }, [cargarLineup]);
 
-  const clienteActual = useMemo(() => {
+  const clienteActual = (() => {
     if (state.fase !== 'turno') return null;
     return innings[state.inningActual]?.[state.turnoEnInning] || null;
-  }, [innings, state.fase, state.inningActual, state.turnoEnInning]);
+  })();
 
   const handleIniciar = () => {
-    // Primer inning con clientes
     const firstWithClients = innings.findIndex(g => g.length > 0);
     if (firstWithClients === -1) return;
     setState(s => ({
@@ -79,7 +84,6 @@ export default function PartidoDelDia() {
     });
 
     if (next.fase === 'fin') {
-      // Persistir record semanal
       const updatedRecord = appendToRecordSemana(resultadosActualizados);
       setRecordSemana(updatedRecord);
     }
@@ -98,7 +102,6 @@ export default function PartidoDelDia() {
   const handleOutcome = async (outcome, opts = {}) => {
     if (!clienteActual || registrando) return;
 
-    // Balk no crea Interaction (ya se manejó eliminar/reasignar en BalkPanel)
     if (outcome === 'balk') {
       const balksActualizados = [
         ...state.balks,
@@ -138,6 +141,53 @@ export default function PartidoDelDia() {
     }
   };
 
+  // Cambio de bateador: reclasifica al actual + opcionalmente lo sustituye con otro
+  // contacto de la misma empresa (existente o recién creado).
+  const handleCambio = ({ type, substitute, rolNuevo, rolPersonalizado }) => {
+    if (!clienteActual) return;
+    const cambioEntry = {
+      clienteId: clienteActual.clientId,
+      cliente: clienteActual,
+      rolNuevo,
+      rolPersonalizado,
+      type, // 'sustitucion' | 'crear' | 'skip'
+      substituteId: substitute?.clientId || null,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (substitute) {
+      // Reemplazar en innings IN-PLACE (mismo turno, sin avanzar — el sustituto batea ahora)
+      setInnings(prev => prev.map((g, i) =>
+        i === state.inningActual
+          ? g.map((c, j) => j === state.turnoEnInning ? substitute : c)
+          : g
+      ));
+      setState(s => ({
+        ...s,
+        cambios: [...s.cambios, cambioEntry],
+      }));
+    } else {
+      // Skip turn: avanza al siguiente sin sumar al scoreboard
+      const next = calcularSiguienteFase({
+        innings,
+        inningActual: state.inningActual,
+        turnoEnInning: state.turnoEnInning,
+      });
+      if (next.fase === 'fin') {
+        const updatedRecord = appendToRecordSemana(state.resultados);
+        setRecordSemana(updatedRecord);
+      }
+      setState(s => ({
+        ...s,
+        cambios: [...s.cambios, cambioEntry],
+        fase: next.fase,
+        inningActual: next.inningActual,
+        turnoEnInning: next.turnoEnInning,
+        siguienteInning: next.siguienteInning ?? null,
+      }));
+    }
+  };
+
   const handleSiguienteInning = () => {
     const next = state.siguienteInning ?? state.inningActual + 1;
     setState(s => ({
@@ -150,7 +200,6 @@ export default function PartidoDelDia() {
   };
 
   const handleCerrarPartido = () => {
-    // Reset y vuelve a Dugout. Se recarga el lineup por si hubo cambios.
     setState({
       fase: 'dugout',
       inningActual: 0,
@@ -158,6 +207,7 @@ export default function PartidoDelDia() {
       siguienteInning: null,
       resultados: [],
       balks: [],
+      cambios: [],
       iniciadoEn: null,
     });
     cargarLineup();
@@ -165,13 +215,22 @@ export default function PartidoDelDia() {
 
   const handleClientUpdated = (updated) => {
     if (!updated) return;
-    setLineup(prev => prev.map(c => c.clientId === updated.id
-      ? { ...c, ...updated, clientId: c.clientId, estatus: updated.estatus ?? c.estatus, nextActionNote: updated.nextActionNote ?? c.nextActionNote, vendedor: updated.vendedor ?? c.vendedor }
-      : c
-    ));
+    // Actualiza lineup y innings sin reorganizar posiciones
+    const merger = (c) => c.clientId === updated.id
+      ? {
+          ...c,
+          ...updated,
+          clientId: c.clientId,
+          // preservar campos del lineup que el PUT no devuelve
+          priorityScore: c.priorityScore,
+          disposicion: c.disposicion,
+          razonSeleccion: c.razonSeleccion,
+        }
+      : c;
+    setLineup(prev => prev.map(merger));
+    setInnings(prev => prev.map(g => g.map(merger)));
   };
 
-  // Resultados del inning actual (para EntreInnings)
   const resultadosInning = state.resultados.filter(r => r.inning === state.inningActual);
 
   if (error) {
@@ -210,6 +269,7 @@ export default function PartidoDelDia() {
             resultados={state.resultados}
             onOutcome={handleOutcome}
             onClientUpdated={handleClientUpdated}
+            onCambio={handleCambio}
           />
         )}
 
@@ -227,6 +287,7 @@ export default function PartidoDelDia() {
             lineup={lineup}
             resultados={state.resultados}
             balks={state.balks}
+            cambios={state.cambios}
             onCerrar={handleCerrarPartido}
           />
         )}
@@ -236,7 +297,6 @@ export default function PartidoDelDia() {
 }
 
 export function usePartidoPendientes() {
-  // Hook auxiliar para el badge del Sidebar: cuenta turnos pendientes en el daily-plan
   const [count, setCount] = useState(null);
   useEffect(() => {
     let mounted = true;
