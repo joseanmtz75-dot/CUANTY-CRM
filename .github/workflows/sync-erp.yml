@@ -1,0 +1,73 @@
+name: "Sync ERP → CRM"
+
+on:
+  schedule:
+    # 3am hora MX = 9am UTC (CST UTC-6)
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger sync against CRM
+        id: trigger
+        env:
+          CRM_URL: ${{ secrets.CRM_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRM_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::Falta secret CRM_URL o CRON_SECRET"
+            exit 1
+          fi
+
+          echo "POST $CRM_URL/api/cron/sync-erp?apply=true"
+          curl --fail-with-body --max-time 240 \
+            -X POST "$CRM_URL/api/cron/sync-erp?apply=true" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -o response.json
+
+          echo "::group::Raw response"
+          cat response.json
+          echo
+          echo "::endgroup::"
+
+      - name: Parse summary and fail on recompute errors
+        run: |
+          set -euo pipefail
+          applied=$(jq -r '.applied // false' response.json)
+          updated=$(jq -r '.updated // 0' response.json)
+          created=$(jq -r '.created // 0' response.json)
+          recomputed=$(jq -r '.recomputed // 0' response.json)
+          recompute_errors=$(jq -r '.recompute_errors // 0' response.json)
+
+          echo "Applied:            $applied"
+          echo "Updated:            $updated"
+          echo "Created:            $created"
+          echo "Recomputed:         $recomputed"
+          echo "Recompute errors:   $recompute_errors"
+
+          {
+            echo "## Sync ERP → CRM"
+            echo ""
+            echo "| Métrica | Valor |"
+            echo "|---|---|"
+            echo "| applied | \`$applied\` |"
+            echo "| updated | $updated |"
+            echo "| created | $created |"
+            echo "| recomputed | $recomputed |"
+            echo "| recompute_errors | $recompute_errors |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$applied" != "true" ]; then
+            echo "::error::La respuesta no trajo applied:true. Revisa logs y CRM."
+            exit 1
+          fi
+
+          if [ "$recompute_errors" -gt 0 ]; then
+            echo "::error::Recompute reportó $recompute_errors errores. El sync sí escribió, pero el motor de inteligencia no pudo recalcular todos los Client afectados."
+            exit 1
+          fi
