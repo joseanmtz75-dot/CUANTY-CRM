@@ -14,6 +14,10 @@ export const getClients = (filters = {}) => {
     if (filters.vendedor) params.vendedor = filters.vendedor;
     if (filters.disposition) params.disposition = filters.disposition;
     if (filters.clasificacion) params.clasificacion = filters.clasificacion;
+    if (filters.clasificacionErp) params.clasificacionErp = filters.clasificacionErp;
+    if (filters.rfc) params.rfc = filters.rfc;
+    if (filters.diasSinCompraErpMin != null) params.diasSinCompraErpMin = filters.diasSinCompraErpMin;
+    if (filters.diasSinCompraErpMax != null) params.diasSinCompraErpMax = filters.diasSinCompraErpMax;
   }
   return API.get('/clients', { params }).then(res => res.data);
 };
@@ -54,6 +58,10 @@ export const bulkAssignClients = (data) =>
 // Mi Dia
 export const getMiDia = () =>
   API.get('/dashboard/mi-dia').then(res => res.data);
+
+// Dashboard overview (counts agregados, cheap)
+export const getOverview = () =>
+  API.get('/dashboard/overview').then(res => res.data);
 
 // Rendimiento
 export const getRendimiento = () =>

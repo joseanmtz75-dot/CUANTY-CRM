@@ -84,6 +84,30 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
       return;
     }
 
+    if (initialFilter?.type === 'clasificacionErp') {
+      getClients({ incluirDescartados: false, clasificacionErp: initialFilter.value })
+        .then(setClients)
+        .catch(handleError)
+        .finally(() => setLoading(false));
+      return;
+    }
+
+    if (initialFilter?.type === 'altosEnRiesgo') {
+      getClients({ incluirDescartados: false, clasificacionErp: 'ALTO', diasSinCompraErpMin: 365 })
+        .then(setClients)
+        .catch(handleError)
+        .finally(() => setLoading(false));
+      return;
+    }
+
+    if (initialFilter?.type === 'postventaPendiente') {
+      getClients({ incluirDescartados: true, estatus: 'Cerrado', clasificacionErp: 'ALTO', diasSinCompraErpMin: 90 })
+        .then(setClients)
+        .catch(handleError)
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const filters = {};
     if (filtro !== 'Todos') filters.estatus = filtro;
     if (search.trim()) filters.search = search.trim();

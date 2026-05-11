@@ -1,47 +1,31 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getClients, getTodayFollowUps } from '../api/clients';
-import { ESTATUSES, STATUS_COLORS, DISPOSITION_LABELS, DISPOSITION_COLORS } from '../utils/constants';
+import { getOverview, getTodayFollowUps } from '../api/clients';
+import { ESTATUSES, STATUS_COLORS, DISPOSITION_LABELS, DISPOSITION_COLORS, CLASIFICACION_ERP_COLORS, formatMxn } from '../utils/constants';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertTriangle, Wrench, Sparkles, DollarSign } from 'lucide-react';
 import SuggestionPanel from './SuggestionPanel';
 
 export default function Dashboard({ onNavigate }) {
-  const [clients, setClients] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [todayData, setTodayData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     Promise.all([
-      getClients({ incluirDescartados: true }),
+      getOverview(),
       getTodayFollowUps(),
-    ]).then(([allClients, today]) => {
-      setClients(allClients);
+    ]).then(([ov, today]) => {
+      setOverview(ov);
       setTodayData(today.clients);
     }).catch(() => setError('Error al cargar datos del dashboard.'))
       .finally(() => setLoading(false));
   }, []);
 
-  const countByStatus = (estatus) => clients.filter(c => c.estatus === estatus).length;
-
   const paraHoy = todayData.length;
-  const vencidos = todayData.filter(c => c.diasVencido > 0).length;
-
-  const activeClients = useMemo(() => clients.filter(c => !['Cerrado', 'Perdido', 'Descartado'].includes(c.estatus)), [clients]);
-  const dispCounts = useMemo(() => {
-    const counts = {};
-    for (const c of activeClients) {
-      const d = c.metrics?.disposition || 'desconocido';
-      counts[d] = (counts[d] || 0) + 1;
-    }
-    return counts;
-  }, [activeClients]);
-
-  const topPriority = useMemo(() => [...activeClients]
-    .filter(c => c.metrics?.priorityScore != null)
-    .sort((a, b) => (b.metrics.priorityScore || 0) - (a.metrics.priorityScore || 0))
-    .slice(0, 5), [activeClients]);
+  const vencidos = useMemo(() => todayData.filter(c => c.diasVencido > 0).length, [todayData]);
 
   if (loading) {
     return (
@@ -54,6 +38,11 @@ export default function Dashboard({ onNavigate }) {
       </div>
     );
   }
+
+  if (!overview) return null;
+
+  const { totalClientes, porEstatus, porDisposition, porClasificacionErp, altosEnRiesgo, postventaPendiente, onboardingActivo, totalComprasErpAcum, topPriority } = overview;
+  const countByStatus = (estatus) => porEstatus[estatus] || 0;
 
   return (
     <div className="space-y-6">
@@ -68,7 +57,7 @@ export default function Dashboard({ onNavigate }) {
           onClick={() => onNavigate('clients', null)}
         >
           <CardContent className="pt-4 pb-3 px-4 text-center">
-            <div className="text-3xl font-bold">{clients.length}</div>
+            <div className="text-3xl font-bold">{totalClientes}</div>
             <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Total Clientes</div>
           </CardContent>
         </Card>
@@ -92,7 +81,7 @@ export default function Dashboard({ onNavigate }) {
             <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Vencidos</div>
           </CardContent>
         </Card>
-        {ESTATUSES.filter(s => !['Descartado', 'Reactivar'].includes(s)).map(estatus => (
+        {ESTATUSES.filter(s => s !== 'Descartado').map(estatus => (
           <Card
             className="cursor-pointer hover:-translate-y-0.5 transition-all border-t-4"
             key={estatus}
@@ -107,11 +96,74 @@ export default function Dashboard({ onNavigate }) {
         ))}
       </div>
 
+      {/* ERP Section */}
+      <div>
+        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-emerald-600" />
+          Señales del ERP
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="border-t-4 border-t-emerald-600">
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <DollarSign className="h-4 w-4 text-emerald-600 mx-auto mb-1" />
+              <div className="text-2xl font-bold">{formatMxn(totalComprasErpAcum).replace(' MXN', '')}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Compras ERP acumulado</div>
+            </CardContent>
+          </Card>
+          <Card
+            className="cursor-pointer hover:-translate-y-0.5 transition-all border-t-4 border-t-red-600"
+            onClick={() => onNavigate('clients', { type: 'altosEnRiesgo', label: 'ALTOs en riesgo' })}
+          >
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <AlertTriangle className="h-4 w-4 text-red-600 mx-auto mb-1" />
+              <div className="text-2xl font-bold">{altosEnRiesgo}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">ALTOs en riesgo</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">sin compra +12m</div>
+            </CardContent>
+          </Card>
+          <Card
+            className="cursor-pointer hover:-translate-y-0.5 transition-all border-t-4 border-t-amber-600"
+            onClick={() => onNavigate('clients', { type: 'postventaPendiente', label: 'Postventa pendiente' })}
+          >
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <Wrench className="h-4 w-4 text-amber-600 mx-auto mb-1" />
+              <div className="text-2xl font-bold">{postventaPendiente}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Postventa pendiente</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">ALTO Cerrado +90d</div>
+            </CardContent>
+          </Card>
+          <Card className="border-t-4 border-t-cyan-600">
+            <CardContent className="pt-4 pb-3 px-4 text-center">
+              <Sparkles className="h-4 w-4 text-cyan-600 mx-auto mb-1" />
+              <div className="text-2xl font-bold">{onboardingActivo}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide mt-1">Onboarding activo</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">primera compra -60d</div>
+            </CardContent>
+          </Card>
+        </div>
+        {Object.keys(porClasificacionErp).length > 0 && (
+          <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+            <span>Clasificación ERP:</span>
+            {['ALTO', 'MEDIO', 'BAJO'].map(k => (
+              porClasificacionErp[k] ? (
+                <Badge
+                  key={k}
+                  className="text-white"
+                  style={{ backgroundColor: CLASIFICACION_ERP_COLORS[k] }}
+                >
+                  {k}: {porClasificacionErp[k]}
+                </Badge>
+              ) : null
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Disposition */}
       <div>
         <h3 className="text-lg font-semibold mb-3">Disposicion de Clientes Activos</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {Object.entries(dispCounts)
+          {Object.entries(porDisposition)
             .filter(([, count]) => count > 0)
             .map(([key, count]) => (
               <Card
@@ -130,24 +182,35 @@ export default function Dashboard({ onNavigate }) {
       </div>
 
       {/* Top Priority */}
-      {topPriority.length > 0 && (
+      {topPriority?.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-3">Top Prioridad</h3>
           <div className="space-y-2">
             {topPriority.map(c => (
               <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg bg-card border hover:bg-muted/50 transition-colors">
                 <Badge className="bg-[#001529] text-white hover:bg-[#001529] text-xs font-bold px-2">
-                  P{c.metrics.priorityScore}
+                  P{c.priorityScore}
                 </Badge>
                 <span className="font-medium">{c.nombre}</span>
-                {c.metrics?.disposition && DISPOSITION_LABELS[c.metrics.disposition] && (
+                {c.clasificacionErp && (
+                  <Badge
+                    className="text-white text-[10px]"
+                    style={{ backgroundColor: CLASIFICACION_ERP_COLORS[c.clasificacionErp] }}
+                  >
+                    ERP·{c.clasificacionErp}
+                  </Badge>
+                )}
+                {c.disposition && DISPOSITION_LABELS[c.disposition] && (
                   <Badge
                     variant="secondary"
                     className="text-white text-[10px]"
-                    style={{ backgroundColor: DISPOSITION_COLORS[c.metrics.disposition] }}
+                    style={{ backgroundColor: DISPOSITION_COLORS[c.disposition] }}
                   >
-                    {DISPOSITION_LABELS[c.metrics.disposition].substring(0, 3)}
+                    {DISPOSITION_LABELS[c.disposition].substring(0, 3)}
                   </Badge>
+                )}
+                {c.empresa && (
+                  <span className="text-xs text-muted-foreground ml-auto">{c.empresa}</span>
                 )}
               </div>
             ))}
