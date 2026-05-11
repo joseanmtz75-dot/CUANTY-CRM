@@ -104,6 +104,9 @@ function createClientsRouter(prisma) {
         clasificacion,
         clasificacionErp,
         rfc,
+        empresa,
+        rol,
+        excludeId,
         diasSinCompraErpMin,
         diasSinCompraErpMax,
       } = req.query;
@@ -125,6 +128,19 @@ function createClientsRouter(prisma) {
 
       if (rfc) {
         where.rfc = { equals: rfc.trim(), mode: 'insensitive' };
+      }
+
+      if (empresa) {
+        where.empresa = { equals: empresa.trim(), mode: 'insensitive' };
+      }
+
+      if (rol) {
+        where.rol = rol;
+      }
+
+      if (excludeId) {
+        const idsToExclude = Array.isArray(excludeId) ? excludeId.map(Number) : [Number(excludeId)];
+        where.id = { notIn: idsToExclude.filter(Number.isFinite) };
       }
 
       const diasMin = diasSinCompraErpMin !== undefined ? parseInt(diasSinCompraErpMin, 10) : null;
