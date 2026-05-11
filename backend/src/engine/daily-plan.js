@@ -190,6 +190,10 @@ function buildDailyPlan(clients, limit) {
       empresa: client.empresa || null,
       estatus: client.estatus,
       telefono: client.telefono,
+      email: client.email || null,
+      rfc: client.rfc || null,
+      vendedor: client.vendedor || null,
+      notas: client.notas || null,
       scoreCompuesto,
       priorityScore,
       actionabilityScore,
@@ -198,8 +202,22 @@ function buildDailyPlan(clients, limit) {
       approach: rec.approach || null,
       canal: rec.channel || null,
       razonSeleccion: razon,
+      recommendedReasoning: rec.reasoning || null,
       diasSinContacto: analysis.metrics.diasSinContacto,
       diasVencido,
+      // ERP enrichment
+      clasificacionErp: client.clasificacionErp || null,
+      ultimaCompraErp: client.ultimaCompraErp || null,
+      primeraCompraErp: client.primeraCompraErp || null,
+      totalComprasErp: client.totalComprasErp || null,
+      productosFrecuentesErp: client.productosFrecuentesErp || null,
+      // PDF analyzer (histórico)
+      clasificacion: client.clasificacion || null,
+      productosFrecuentes: client.productosFrecuentes || null,
+      // Contexto de seguimiento
+      nextActionNote: client.nextActionNote || null,
+      proximoContacto: client.proximoContacto || null,
+      ultimoContacto: client.ultimoContacto || null,
       _category: category,
       _createdAt: client.createdAt,
     };

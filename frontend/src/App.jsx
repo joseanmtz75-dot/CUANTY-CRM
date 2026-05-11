@@ -8,9 +8,11 @@ import VendedorView from './components/VendedorView';
 import MiRendimiento from './components/MiRendimiento';
 import ChatAssistant from './components/ChatAssistant';
 import AlertasPanel from './components/AlertasPanel';
+import PartidoDelDia from './components/PartidoDelDia';
 
 const VIEW_TITLES = {
   'mi-dia': 'Mi Dia',
+  'partido': 'Partido del Día',
   'seguimiento': 'Seguimiento',
   'clients': 'Clientes',
   'vendedores': 'Vendedores',
@@ -51,6 +53,7 @@ function App() {
       }
     >
       {view === 'mi-dia' && <MiDia onNavigate={handleNavigate} />}
+      {view === 'partido' && <PartidoDelDia />}
       {view === 'seguimiento' && (
         <FollowUpView
           initialFilter={viewFilter?.type === 'seguimiento' ? viewFilter : null}
