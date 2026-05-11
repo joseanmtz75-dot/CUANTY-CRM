@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getTodayFollowUps } from '../api/clients';
+import { getTodayFollowUps, posponerCliente } from '../api/clients';
 import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ACTION_LABELS, APPROACH_LABELS, CLASIFICACION_ERP_COLORS, diasDesdeFecha } from '../utils/constants';
 import { toWhatsAppUrl } from '../utils/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { X, MessageCircle } from 'lucide-react';
+import { X, MessageCircle, Clock } from 'lucide-react';
 import QuickLogModal from './QuickLogModal';
 import ClientIntelligenceModal from './ClientIntelligenceModal';
 
@@ -59,6 +59,20 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
     setSelectedClient(null);
     setQuickLogType(null);
     fetchData();
+  };
+
+  const [posponiendoId, setPosponiendoId] = useState(null);
+  const handlePosponer = async (client) => {
+    if (posponiendoId) return;
+    setPosponiendoId(client.id);
+    try {
+      await posponerCliente(client.id, 1);
+      fetchData();
+    } catch (err) {
+      alert('Error al posponer: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setPosponiendoId(null);
+    }
   };
 
   if (loading) {
@@ -259,6 +273,17 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
                   <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={() => openQuickLog(client, 'mensaje')}>Mensaje</Button>
                   <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={() => openQuickLog(client, 'nota')}>Nota</Button>
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openQuickLog(client, null)}>Registrar...</Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs text-muted-foreground"
+                    onClick={() => handlePosponer(client)}
+                    disabled={posponiendoId === client.id}
+                    title="Mover proximoContacto a mañana 9am, sin crear interacción"
+                  >
+                    <Clock className="h-3 w-3 mr-1" />
+                    {posponiendoId === client.id ? 'Posponiendo…' : 'Posponer 1d'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

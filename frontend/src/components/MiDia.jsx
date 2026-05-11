@@ -1,24 +1,45 @@
 import { useState, useEffect } from 'react';
-import { getMiDia } from '../api/clients';
+import { getMiDia, markRecommendationActed } from '../api/clients';
 import { STATUS_COLORS, CLASIFICACION_ERP_COLORS, diasDesdeFecha } from '../utils/constants';
 import { toWhatsAppUrl } from '../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, ClipboardCheck, Eye, Check } from 'lucide-react';
+import QuickLogModal from './QuickLogModal';
+import ClientIntelligenceModal from './ClientIntelligenceModal';
 
 function MiDia({ onNavigate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [intelligenceClient, setIntelligenceClient] = useState(null);
+  const [quickLogClient, setQuickLogClient] = useState(null);
+  const [markingId, setMarkingId] = useState(null);
 
-  useEffect(() => {
+  const fetchData = () => {
+    setLoading(true);
     getMiDia()
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleMarkActed = async (rec) => {
+    if (markingId) return;
+    setMarkingId(rec.id);
+    try {
+      await markRecommendationActed(rec.id);
+      fetchData();
+    } catch (err) {
+      alert('Error al marcar: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setMarkingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -79,7 +100,7 @@ function MiDia({ onNavigate }) {
                     <div
                       key={c.id}
                       className="p-3 rounded-lg border-l-[3px] border-l-blue-500 bg-muted/30 cursor-pointer hover:bg-muted/60 transition-colors"
-                      onClick={() => onNavigate('seguimiento')}
+                      onClick={() => setIntelligenceClient(c)}
                     >
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge className="bg-[#001529] text-white hover:bg-[#001529] text-xs font-bold px-1.5">
@@ -111,22 +132,30 @@ function MiDia({ onNavigate }) {
                       {c.recommendedAction && (
                         <span className="text-xs text-blue-600 font-medium mt-1 block">{c.recommendedAction}</span>
                       )}
-                      {waUrl && (
-                        <div className="mt-2">
+                      <div className="flex gap-1.5 mt-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                        {waUrl && (
                           <Button
                             size="sm"
                             variant="outline"
                             className="h-6 text-[11px] border-green-600 text-green-700 hover:bg-green-50"
                             asChild
-                            onClick={(e) => e.stopPropagation()}
                           >
                             <a href={waUrl} target="_blank" rel="noopener noreferrer">
                               <MessageCircle className="h-3 w-3 mr-1" />
                               WhatsApp
                             </a>
                           </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 text-[11px]"
+                          onClick={() => setQuickLogClient(c)}
+                        >
+                          <ClipboardCheck className="h-3 w-3 mr-1" />
+                          Registrar
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
@@ -145,25 +174,60 @@ function MiDia({ onNavigate }) {
               <p className="text-sm text-muted-foreground py-4 text-center">No hay clientes en riesgo</p>
             ) : (
               <div className="space-y-2">
-                {enRiesgo.map((c) => (
-                  <div
-                    key={c.id}
-                    className="p-3 rounded-lg border-l-[3px] border-l-red-500 bg-muted/30 cursor-pointer hover:bg-muted/60 transition-colors"
-                    onClick={() => onNavigate('seguimiento')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{c.nombre}</span>
-                      <Badge
-                        className="text-white text-[10px] ml-auto"
-                        style={{ backgroundColor: STATUS_COLORS[c.estatus] || '#8c8c8c' }}
-                      >
-                        {c.estatus}
-                      </Badge>
+                {enRiesgo.map((c) => {
+                  const waUrl = toWhatsAppUrl(c.telefono);
+                  return (
+                    <div
+                      key={c.id}
+                      className={`p-3 rounded-lg border-l-[3px] bg-muted/30 cursor-pointer hover:bg-muted/60 transition-colors ${c.altoEnRiesgoErp ? 'border-l-red-700' : 'border-l-red-500'}`}
+                      onClick={() => setIntelligenceClient(c)}
+                    >
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{c.nombre}</span>
+                        {c.clasificacionErp && (
+                          <Badge
+                            className="text-white text-[10px]"
+                            style={{ backgroundColor: CLASIFICACION_ERP_COLORS[c.clasificacionErp] || '#6b7280' }}
+                          >
+                            ERP·{c.clasificacionErp}
+                          </Badge>
+                        )}
+                        <Badge
+                          className="text-white text-[10px] ml-auto"
+                          style={{ backgroundColor: STATUS_COLORS[c.estatus] || '#8c8c8c' }}
+                        >
+                          {c.estatus}
+                        </Badge>
+                      </div>
+                      {c.empresa && <span className="text-xs text-muted-foreground mt-1 block">{c.empresa}</span>}
+                      <Badge variant={c.altoEnRiesgoErp ? 'destructive' : 'secondary'} className="text-[10px] mt-1">{c.razonRiesgo}</Badge>
+                      <div className="flex gap-1.5 mt-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                        {waUrl && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 text-[11px] border-green-600 text-green-700 hover:bg-green-50"
+                            asChild
+                          >
+                            <a href={waUrl} target="_blank" rel="noopener noreferrer">
+                              <MessageCircle className="h-3 w-3 mr-1" />
+                              WhatsApp
+                            </a>
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 text-[11px]"
+                          onClick={() => setQuickLogClient(c)}
+                        >
+                          <ClipboardCheck className="h-3 w-3 mr-1" />
+                          Registrar
+                        </Button>
+                      </div>
                     </div>
-                    {c.empresa && <span className="text-xs text-muted-foreground mt-1 block">{c.empresa}</span>}
-                    <Badge variant="destructive" className="text-[10px] mt-1">{c.razonRiesgo}</Badge>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -183,7 +247,7 @@ function MiDia({ onNavigate }) {
                   <div
                     key={r.id}
                     className="p-3 rounded-lg border-l-[3px] border-l-amber-500 bg-muted/30 cursor-pointer hover:bg-muted/60 transition-colors"
-                    onClick={() => onNavigate('seguimiento')}
+                    onClick={() => setIntelligenceClient({ id: r.clientId, nombre: r.nombre, estatus: r.estatus, empresa: r.empresa })}
                   >
                     <div className="flex items-center gap-2">
                       <Badge className="bg-[#001529] text-white hover:bg-[#001529] text-xs font-bold px-1.5">
@@ -196,6 +260,18 @@ function MiDia({ onNavigate }) {
                     {r.recommendedApproach && (
                       <span className="text-xs text-muted-foreground block">{r.recommendedApproach}</span>
                     )}
+                    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 text-[11px] border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => handleMarkActed(r)}
+                        disabled={markingId === r.id}
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        {markingId === r.id ? 'Guardando…' : 'Acción tomada'}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -203,6 +279,21 @@ function MiDia({ onNavigate }) {
           </CardContent>
         </Card>
       </div>
+
+      {intelligenceClient && (
+        <ClientIntelligenceModal
+          client={intelligenceClient}
+          onClose={() => setIntelligenceClient(null)}
+        />
+      )}
+
+      {quickLogClient && (
+        <QuickLogModal
+          client={quickLogClient}
+          onClose={() => setQuickLogClient(null)}
+          onSaved={() => { setQuickLogClient(null); fetchData(); }}
+        />
+      )}
     </div>
   );
 }

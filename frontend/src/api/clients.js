@@ -52,6 +52,19 @@ export const getSuggestions = () =>
 export const getClientIntelligence = (clientId) =>
   API.get(`/clients/${clientId}/intelligence`).then(res => res.data);
 
+export const markRecommendationActed = (id, payload = {}) =>
+  API.patch(`/recommendations/${id}`, { wasActedUpon: true, ...payload }).then(res => res.data);
+
+export const posponerCliente = (id, dias = 1) => {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() + dias);
+  fecha.setHours(9, 0, 0, 0);
+  return API.put(`/clients/${id}`, {
+    proximoContacto: fecha.toISOString(),
+    contactoManual: true,
+  }).then(res => res.data);
+};
+
 export const bulkAssignClients = (data) =>
   API.put('/clients/bulk-assign', data).then(res => res.data);
 

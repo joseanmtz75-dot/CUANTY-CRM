@@ -91,6 +91,32 @@ function createIntelligenceRouter(prisma) {
     }
   });
 
+  // PATCH /recommendations/:id - Mark recommendation as acted upon
+  router.patch('/recommendations/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (!Number.isFinite(id)) return res.status(400).json({ error: 'id inválido' });
+
+      const wasActedUpon = req.body?.wasActedUpon ?? true;
+      const data = {
+        wasActedUpon: Boolean(wasActedUpon),
+        resolvedAt: wasActedUpon ? new Date() : null,
+      };
+      if (req.body?.interactionId != null) {
+        data.interactionId = parseInt(req.body.interactionId);
+      }
+
+      const updated = await prisma.recommendationLog.update({
+        where: { id },
+        data,
+      });
+      res.json(updated);
+    } catch (err) {
+      if (err.code === 'P2025') return res.status(404).json({ error: 'Recomendación no encontrada' });
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   // POST /engine/recompute - Recompute metrics for all active clients
   router.post('/engine/recompute', async (req, res) => {
     try {
