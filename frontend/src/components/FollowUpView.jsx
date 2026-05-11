@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getTodayFollowUps, posponerCliente } from '../api/clients';
+import { getTodayFollowUps, posponerCliente, getVendedores } from '../api/clients';
 import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ACTION_LABELS, APPROACH_LABELS, CLASIFICACION_ERP_COLORS, diasDesdeFecha } from '../utils/constants';
 import { toWhatsAppUrl } from '../utils/formatters';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,29 +10,54 @@ import { X, MessageCircle, Clock } from 'lucide-react';
 import QuickLogModal from './QuickLogModal';
 import ClientIntelligenceModal from './ClientIntelligenceModal';
 
+const PAGE_SIZE = 25;
+
 export default function FollowUpView({ initialFilter, onClearFilter }) {
   const [clients, setClients] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [posponiendoId, setPosponiendoId] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [quickLogType, setQuickLogType] = useState(null);
   const [activeFilter, setActiveFilter] = useState(initialFilter?.value || null);
   const [intelligenceClient, setIntelligenceClient] = useState(null);
   const [error, setError] = useState(null);
+  const [vendedores, setVendedores] = useState([]);
+  const [vendedorFilter, setVendedorFilter] = useState('');
 
-  const fetchData = () => {
-    setLoading(true);
+  const fetchData = (opts = {}) => {
+    const append = !!opts.append;
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     setError(null);
-    getTodayFollowUps()
+    const offset = append ? clients.length : 0;
+    getTodayFollowUps({
+      vendedor: vendedorFilter || undefined,
+      limit: PAGE_SIZE,
+      offset,
+    })
       .then(data => {
-        setClients(data.clients);
+        setClients(append ? [...clients, ...data.clients] : data.clients);
         setTotalCount(data.totalCount);
       })
-      .catch(() => { setClients([]); setTotalCount(0); setError('Error al cargar seguimientos.'); })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!append) { setClients([]); setTotalCount(0); }
+        setError('Error al cargar seguimientos.');
+      })
+      .finally(() => {
+        setLoading(false);
+        setLoadingMore(false);
+      });
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [vendedorFilter]);
+
+  useEffect(() => {
+    getVendedores()
+      .then(data => setVendedores(data.vendedores || []))
+      .catch(() => setVendedores([]));
+  }, []);
 
   const vencidos = useMemo(() => clients.filter(c => c.diasVencido > 0), [clients]);
   const nuevos = useMemo(() => clients.filter(c => c.estatus === 'Nuevo' && !c.ultimaInteraccion), [clients]);
@@ -61,7 +86,6 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
     fetchData();
   };
 
-  const [posponiendoId, setPosponiendoId] = useState(null);
   const handlePosponer = async (client) => {
     if (posponiendoId) return;
     setPosponiendoId(client.id);
@@ -117,8 +141,24 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
         </Card>
       </div>
 
-      {totalCount > clients.length && (
-        <p className="text-xs text-muted-foreground">Mostrando {clients.length} de {totalCount} clientes (max. 25 por dia)</p>
+      {/* Vendedor filter */}
+      {vendedores.length > 0 && (
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted-foreground">Vendedor:</label>
+          <select
+            className="h-8 rounded-md border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            value={vendedorFilter}
+            onChange={(e) => setVendedorFilter(e.target.value)}
+          >
+            <option value="">Todos</option>
+            <option value="__sin_asignar__">Sin asignar</option>
+            {vendedores.map(v => <option key={v.id} value={v.nombre}>{v.nombre}</option>)}
+          </select>
+        </div>
+      )}
+
+      {totalCount > 0 && (
+        <p className="text-xs text-muted-foreground">Mostrando {clients.length} de {totalCount} cliente{totalCount !== 1 ? 's' : ''}</p>
       )}
 
       {activeFilter && (
@@ -288,6 +328,19 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {clients.length > 0 && clients.length < totalCount && !activeFilter && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loadingMore}
+            onClick={() => fetchData({ append: true })}
+          >
+            {loadingMore ? 'Cargando…' : `Cargar ${Math.min(PAGE_SIZE, totalCount - clients.length)} más`}
+          </Button>
         </div>
       )}
 

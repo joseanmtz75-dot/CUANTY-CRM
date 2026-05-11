@@ -34,9 +34,13 @@ export const deleteClient = (id) =>
 export const bulkImportClients = (clients) =>
   API.post('/clients/bulk', { clients }).then(res => res.data);
 
-export const getTodayFollowUps = (vendedor) => {
+export const getTodayFollowUps = (opts = {}) => {
+  // Backward compat: si recibimos string, asumimos vendedor.
+  const options = typeof opts === 'string' ? { vendedor: opts } : (opts || {});
   const params = {};
-  if (vendedor) params.vendedor = vendedor;
+  if (options.vendedor) params.vendedor = options.vendedor;
+  if (options.limit != null) params.limit = options.limit;
+  if (options.offset != null) params.offset = options.offset;
   return API.get('/clients/today', { params }).then(res => res.data);
 };
 

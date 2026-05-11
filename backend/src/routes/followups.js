@@ -19,6 +19,8 @@ function createFollowupsRouter(prisma) {
   router.get('/today', async (req, res) => {
     try {
       const { vendedor } = req.query;
+      const limit = Math.min(Math.max(parseInt(req.query.limit ?? '25', 10) || 25, 1), 100);
+      const offset = Math.max(parseInt(req.query.offset ?? '0', 10) || 0, 0);
       const now = new Date();
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
@@ -28,7 +30,11 @@ function createFollowupsRouter(prisma) {
         estatus: { notIn: ESTATUS_SIN_SEGUIMIENTO },
         rol: 'compras',
       };
-      if (vendedor) where.vendedor = vendedor;
+      if (vendedor === '__sin_asignar__') {
+        where.OR = [{ vendedor: null }, { vendedor: '' }];
+      } else if (vendedor) {
+        where.vendedor = vendedor;
+      }
 
       const clients = await prisma.client.findMany({
         where,
@@ -90,8 +96,8 @@ function createFollowupsRouter(prisma) {
       });
 
       const totalCount = enriched.length;
-      const limited = enriched.slice(0, 25);
-      res.json({ clients: limited, totalCount });
+      const paged = enriched.slice(offset, offset + limit);
+      res.json({ clients: paged, totalCount, limit, offset });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
