@@ -404,6 +404,7 @@ export default function TurnoAlBat({
   onOutcome,
   onClientUpdated,
   onCambio,
+  onPasarTurno,
 }) {
   const [expedienteOpen, setExpedienteOpen] = useState(false);
   const [balkOpen, setBalkOpen] = useState(false);
@@ -565,6 +566,22 @@ export default function TurnoAlBat({
           >
             ⇄ No es el indicado · Cambiar contacto
           </button>
+
+          {onPasarTurno && (
+            <button
+              type="button"
+              className="pd-btn-pasar"
+              onClick={() => {
+                if (confirm('¿Pasar este turno sin registrar nada? El cliente queda igual y avanzas al siguiente.')) {
+                  onPasarTurno();
+                }
+              }}
+              disabled={!!flying}
+              title="Pasa al siguiente bateador sin tocar a este cliente"
+            >
+              → Pasar turno sin registrar
+            </button>
+          )}
 
           <button className="pd-ver-expediente" onClick={() => setExpedienteOpen(true)} type="button">
             {tieneTel ? 'Ver expediente completo →' : 'Completar datos del cliente →'}

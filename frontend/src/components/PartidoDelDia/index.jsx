@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getDailyPlan, logInteraction } from '../../api/clients';
+import { getDailyPlan, getVendedores, logInteraction } from '../../api/clients';
 import {
   distribuirEnInnings,
   calcularSiguienteFase,
@@ -12,6 +12,20 @@ import TurnoAlBat from './TurnoAlBat';
 import EntreInnings from './EntreInnings';
 import FinDelPartido from './FinDelPartido';
 import './partido.css';
+
+const LS_VENDEDOR_KEY = 'partido-vendedor-actual';
+
+function loadVendedorActual() {
+  try { return localStorage.getItem(LS_VENDEDOR_KEY) || ''; }
+  catch { return ''; }
+}
+
+function saveVendedorActual(v) {
+  try {
+    if (v) localStorage.setItem(LS_VENDEDOR_KEY, v);
+    else localStorage.removeItem(LS_VENDEDOR_KEY);
+  } catch { /* ignore */ }
+}
 
 function fechaLegible() {
   const d = new Date();
@@ -37,6 +51,8 @@ export default function PartidoDelDia() {
   });
   const [recordSemana, setRecordSemana] = useState(() => loadRecordSemana());
   const [registrando, setRegistrando] = useState(false);
+  const [currentVendedor, setCurrentVendedor] = useState(() => loadVendedorActual());
+  const [vendedoresList, setVendedoresList] = useState([]);
 
   const totalTurnos = innings.reduce((acc, i) => acc + i.length, 0);
 
@@ -44,7 +60,7 @@ export default function PartidoDelDia() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getDailyPlan(15);
+      const data = await getDailyPlan(15, currentVendedor || null);
       const lista = data.listaDelDia || [];
       setLineup(lista);
       setInnings(distribuirEnInnings(lista));
@@ -55,9 +71,20 @@ export default function PartidoDelDia() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentVendedor]);
 
   useEffect(() => { cargarLineup(); }, [cargarLineup]);
+
+  useEffect(() => {
+    getVendedores()
+      .then(d => setVendedoresList(d.vendedores || []))
+      .catch(() => setVendedoresList([]));
+  }, []);
+
+  const handleVendedorChange = (v) => {
+    setCurrentVendedor(v);
+    saveVendedorActual(v);
+  };
 
   const clienteActual = (() => {
     if (state.fase !== 'turno') return null;
@@ -199,6 +226,28 @@ export default function PartidoDelDia() {
     }));
   };
 
+  // Pasar turno sin registrar nada: avanza fase sin tocar al cliente ni sumar al scoreboard.
+  // Útil cuando el cliente ya no aplica para mí (ej: lo reasigné en una sesión anterior).
+  const handlePasarTurno = () => {
+    if (!clienteActual || registrando) return;
+    const next = calcularSiguienteFase({
+      innings,
+      inningActual: state.inningActual,
+      turnoEnInning: state.turnoEnInning,
+    });
+    if (next.fase === 'fin') {
+      const updatedRecord = appendToRecordSemana(state.resultados);
+      setRecordSemana(updatedRecord);
+    }
+    setState(s => ({
+      ...s,
+      fase: next.fase,
+      inningActual: next.inningActual,
+      turnoEnInning: next.turnoEnInning,
+      siguienteInning: next.siguienteInning ?? null,
+    }));
+  };
+
   const handleCerrarPartido = () => {
     setState({
       fase: 'dugout',
@@ -256,6 +305,9 @@ export default function PartidoDelDia() {
             totalTurnos={totalTurnos}
             loading={loading}
             fecha={fechaLegible()}
+            vendedoresList={vendedoresList}
+            currentVendedor={currentVendedor}
+            onVendedorChange={handleVendedorChange}
           />
         )}
 
@@ -270,6 +322,7 @@ export default function PartidoDelDia() {
             onOutcome={handleOutcome}
             onClientUpdated={handleClientUpdated}
             onCambio={handleCambio}
+            onPasarTurno={handlePasarTurno}
           />
         )}
 
@@ -300,7 +353,8 @@ export function usePartidoPendientes() {
   const [count, setCount] = useState(null);
   useEffect(() => {
     let mounted = true;
-    getDailyPlan(15)
+    const vendedor = loadVendedorActual();
+    getDailyPlan(15, vendedor || null)
       .then(d => { if (mounted) setCount((d.listaDelDia || []).length); })
       .catch(() => { if (mounted) setCount(0); });
     return () => { mounted = false; };

@@ -58,7 +58,17 @@ function Inning({ index, clientes, startBatNumber }) {
   );
 }
 
-export default function Dugout({ innings, recordSemana, onIniciar, totalTurnos, loading, vendedorNombre, fecha }) {
+export default function Dugout({
+  innings,
+  recordSemana,
+  onIniciar,
+  totalTurnos,
+  loading,
+  fecha,
+  vendedoresList = [],
+  currentVendedor = '',
+  onVendedorChange,
+}) {
   if (loading) {
     return <div className="pd-loader">CARGANDO LINEUP…</div>;
   }
@@ -67,6 +77,26 @@ export default function Dugout({ innings, recordSemana, onIniciar, totalTurnos, 
 
   return (
     <div className="pd-fade-in">
+      {vendedoresList.length > 0 && onVendedorChange && (
+        <div className="pd-vendedor-selector">
+          <label>Soy:</label>
+          <select
+            value={currentVendedor}
+            onChange={(e) => onVendedorChange(e.target.value)}
+          >
+            <option value="">Ver todos (sin filtro)</option>
+            {vendedoresList.map(v => (
+              <option key={v.id} value={v.nombre}>{v.nombre}</option>
+            ))}
+          </select>
+          {currentVendedor && (
+            <span className="pd-vendedor-hint">
+              Lineup excluye clientes asignados a otros vendedores
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="pd-record-label">Récord de la semana</div>
       <div className="pd-scoreboard">
         <div className="pd-sb-item">
