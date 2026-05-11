@@ -10,11 +10,11 @@ function flowDescription(top) {
   return 'Hit con avance positivo';
 }
 
-export default function FinDelPartido({ lineup, resultados, balks, onCerrar }) {
+export default function FinDelPartido({ lineup, resultados, balks, cambios = [], onCerrar }) {
   const counts = contarOutcomes(resultados);
   const pendientes = clientesPendientesParaManana(resultados, lineup);
   const top = topJugada(resultados, lineup);
-  const totalTurnos = resultados.length + balks.length;
+  const totalTurnos = resultados.length + balks.length + cambios.length;
 
   return (
     <div className="pd-fin pd-fade-in">
@@ -56,6 +56,27 @@ export default function FinDelPartido({ lineup, resultados, balks, onCerrar }) {
           <div className="pd-top-play-flow">
             {flowDescription(top)}
           </div>
+        </div>
+      )}
+
+      {cambios.length > 0 && (
+        <div className="pd-pendientes" style={{ borderColor: 'var(--pd-grass)' }}>
+          <h3>Reclasificaciones <span style={{ background: 'var(--pd-grass)' }}>{cambios.length}</span></h3>
+          {cambios.map((cb, i) => (
+            <div className="pd-pendiente-row" key={i}>
+              <div>
+                <strong>{cb.cliente?.nombre}</strong>
+                <div style={{ fontSize: 11, color: 'var(--pd-ink-mute)', marginTop: 2 }}>
+                  {cb.cliente?.empresa || 'Sin empresa'} · clasificado como <em>{cb.rolNuevo}{cb.rolPersonalizado ? ` (${cb.rolPersonalizado})` : ''}</em>
+                </div>
+              </div>
+              <span>
+                {cb.type === 'sustitucion' && 'Sustituido'}
+                {cb.type === 'crear' && 'Nuevo creado'}
+                {cb.type === 'skip' && 'Sin sustituto'}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
