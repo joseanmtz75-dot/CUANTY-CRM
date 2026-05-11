@@ -17,6 +17,9 @@
   "functions": {
     "api/index.js": {
       "includeFiles": "backend/{src/**,node_modules/.prisma/**}"
+    },
+    "api/cron/sync-erp.js": {
+      "includeFiles": "backend/{src/**,node_modules/.prisma/**}"
     }
   }
 }

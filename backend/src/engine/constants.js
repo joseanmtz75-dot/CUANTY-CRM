@@ -33,13 +33,15 @@ const OUTCOMES = {
 };
 
 // Priority formula weights (must sum to 1.0)
-// B2B equipos: la etapa (Negociando, Interesado) domina la prioridad
+// B2B equipos: la etapa (Negociando, Interesado) domina la prioridad.
+// Valor económico (clasificacionErp) ahora pesa porque tenemos datos reales del ERP.
 const PRIORITY_WEIGHTS = {
   urgencia: 0.15,
-  receptividad: 0.20,
+  receptividad: 0.15,
   momentum: 0.15,
   valorEtapa: 0.35,
-  frescura: 0.15,
+  frescura: 0.05,
+  valorEconomico: 0.15,
 };
 
 // Disposition score mapping for priority calculation
@@ -89,6 +91,19 @@ const THRESHOLDS = {
   },
 };
 
+// ERP-driven thresholds para reglas de recomendación
+const DIAS_SIN_COMPRA_REACTIVAR = 365;
+const DIAS_SIN_COMPRA_POSTVENTA = 90;
+const DIAS_PRIMERA_COMPRA_ONBOARDING = 60;
+
+// Score por clasificación económica (ALTO/MEDIO/BAJO desde ERP)
+const VALOR_ECONOMICO_SCORES = {
+  ALTO: 100,
+  MEDIO: 60,
+  BAJO: 30,
+  null: 40,
+};
+
 const ESTATUS_ACTIVOS = ['Nuevo', 'Contactado', 'Sin respuesta', 'Interesado', 'Negociando', 'Reactivar'];
 
 const DAILY_PLAN_CONFIG = {
@@ -122,4 +137,8 @@ module.exports = {
   THRESHOLDS,
   ESTATUS_ACTIVOS,
   DAILY_PLAN_CONFIG,
+  DIAS_SIN_COMPRA_REACTIVAR,
+  DIAS_SIN_COMPRA_POSTVENTA,
+  DIAS_PRIMERA_COMPRA_ONBOARDING,
+  VALOR_ECONOMICO_SCORES,
 };

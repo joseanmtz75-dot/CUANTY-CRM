@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import { formatName, formatPhone } from '../utils/formatters';
-import { ESTATUSES, ORIGENES, ROLES } from '../utils/constants';
+import {
+  ESTATUSES,
+  ORIGENES,
+  ROLES,
+  CLASIFICACION_ERP_COLORS,
+  diasDesdeFecha,
+  formatMxn,
+} from '../utils/constants';
 import { getVendedores } from '../api/clients';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -12,6 +20,7 @@ const emptyForm = {
   telefono: '',
   email: '',
   empresa: '',
+  rfc: '',
   vendedor: '',
   estatus: 'Nuevo',
   origen: '',
@@ -41,6 +50,7 @@ export default function ClientForm({ client, onSave, onCancel }) {
         telefono: client.telefono || '',
         email: client.email || '',
         empresa: client.empresa || '',
+        rfc: client.rfc || '',
         vendedor: client.vendedor || '',
         estatus: client.estatus || 'Nuevo',
         origen: client.origen || '',
@@ -70,6 +80,7 @@ export default function ClientForm({ client, onSave, onCancel }) {
       ...form,
       nombre: formatName(form.nombre),
       telefono: formatPhone(form.telefono),
+      rfc: form.rfc ? form.rfc.trim().toUpperCase() : null,
       rolPersonalizado: form.rol === 'otro' ? form.rolPersonalizado : null,
     };
     if (data.proximoContacto) {
@@ -117,6 +128,12 @@ export default function ClientForm({ client, onSave, onCancel }) {
             <Label>Empresa</Label>
             <input name="empresa" value={form.empresa} onChange={handleChange} placeholder="Nombre de la empresa"
               className="w-full h-9 px-3 rounded-md border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>RFC</Label>
+            <input name="rfc" value={form.rfc} onChange={handleChange} placeholder="Ej: ABC123456789"
+              className="w-full h-9 px-3 rounded-md border bg-background text-sm uppercase focus:outline-none focus:ring-1 focus:ring-ring" />
           </div>
 
           <div className="space-y-1.5">
@@ -182,7 +199,7 @@ export default function ClientForm({ client, onSave, onCancel }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge
                   className="text-white"
-                  style={{ backgroundColor: client.clasificacion === 'ALTO' ? '#16a34a' : client.clasificacion === 'MEDIO' ? '#d97706' : '#6b7280' }}
+                  style={{ backgroundColor: CLASIFICACION_ERP_COLORS[client.clasificacion] || '#6b7280' }}
                 >
                   {client.clasificacion}
                 </Badge>
@@ -190,11 +207,50 @@ export default function ClientForm({ client, onSave, onCancel }) {
                   <span className="text-xs text-muted-foreground">{client.totalDocumentosPdf} docs</span>
                 )}
                 {client.totalComprasPdf != null && (
-                  <span className="text-xs text-muted-foreground">${client.totalComprasPdf.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</span>
+                  <span className="text-xs text-muted-foreground">{formatMxn(client.totalComprasPdf)}</span>
                 )}
               </div>
               {client.productosFrecuentes && (
                 <p className="text-xs text-muted-foreground">Productos: {client.productosFrecuentes}</p>
+              )}
+            </div>
+          )}
+
+          {client && ((client.totalComprasErp && client.totalComprasErp > 0) || client.rfc) && (
+            <div className="rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/20 p-3 space-y-2">
+              <Label className="text-muted-foreground text-xs">Datos del ERP (en vivo)</Label>
+              <div className="flex items-center gap-2 flex-wrap">
+                {client.clasificacionErp && (
+                  <Badge
+                    className="text-white"
+                    style={{ backgroundColor: CLASIFICACION_ERP_COLORS[client.clasificacionErp] || '#6b7280' }}
+                  >
+                    {client.clasificacionErp}
+                  </Badge>
+                )}
+                {client.totalComprasErp != null && client.totalComprasErp > 0 && (
+                  <span className="text-xs text-muted-foreground">{formatMxn(client.totalComprasErp)} lifetime</span>
+                )}
+                {client.ultimaCompraErp && (() => {
+                  const dias = diasDesdeFecha(client.ultimaCompraErp);
+                  const color = dias > 365 ? 'text-red-600' : dias > 180 ? 'text-amber-600' : 'text-muted-foreground';
+                  return (
+                    <span className={`text-xs ${color}`}>
+                      Última compra: hace {dias} días
+                    </span>
+                  );
+                })()}
+              </div>
+              {client.primeraCompraErp && (
+                <p className="text-xs text-muted-foreground">
+                  Primera compra: {new Date(client.primeraCompraErp).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              )}
+              {client.productosFrecuentesErp && (
+                <p className="text-xs text-muted-foreground">Categorías 12m: {client.productosFrecuentesErp}</p>
+              )}
+              {client.rfc && !client.clasificacionErp && !client.totalComprasErp && (
+                <p className="text-xs text-muted-foreground">RFC registrado, sin sincronización ERP todavía.</p>
               )}
             </div>
           )}

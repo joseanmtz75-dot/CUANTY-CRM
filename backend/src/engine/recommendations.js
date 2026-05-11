@@ -1,12 +1,72 @@
 // Stage 4: Actionable recommendations
 
-const { DISPOSITIONS, ACTIONS, APPROACHES } = require('./constants');
+const {
+  DISPOSITIONS,
+  ACTIONS,
+  APPROACHES,
+  DIAS_SIN_COMPRA_REACTIVAR,
+  DIAS_SIN_COMPRA_POSTVENTA,
+  DIAS_PRIMERA_COMPRA_ONBOARDING,
+} = require('./constants');
+
+function diasEntre(fecha, ahora = new Date()) {
+  if (!fecha) return null;
+  const d = fecha instanceof Date ? fecha : new Date(fecha);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((ahora.getTime() - d.getTime()) / 86400000);
+}
 
 function generateRecommendations(client, metrics, disposition, priority) {
-  const recs = [];
   const disp = disposition.disposition;
+  const clasErp = client.clasificacionErp;
+  const diasSinCompraErp = diasEntre(client.ultimaCompraErp);
+  const diasDesdePrimeraCompra = diasEntre(client.primeraCompraErp);
 
-  // Primary recommendation based on disposition + status
+  // === Reglas ERP (evaluadas PRIMERO, early return si matchea) ===
+
+  // Regla A: ALTO sin compra en 12+ meses → reactivar urgente
+  if (clasErp === 'ALTO' && diasSinCompraErp !== null && diasSinCompraErp > DIAS_SIN_COMPRA_REACTIVAR) {
+    const meses = Math.round(diasSinCompraErp / 30);
+    return [{
+      action: ACTIONS.REACTIVAR,
+      approach: APPROACHES.REACTIVACION,
+      channel: metrics.canalPreferido,
+      reasoning: `Cliente ALTO sin compra en ${meses} meses. Riesgo alto de pérdida ante competencia. Reactivar urgente.`,
+      priority: 95,
+    }];
+  }
+
+  // Regla B: ALTO + Cerrado + +90d sin compra → postventa proactiva
+  if (clasErp === 'ALTO' && client.estatus === 'Cerrado' && diasSinCompraErp !== null && diasSinCompraErp > DIAS_SIN_COMPRA_POSTVENTA) {
+    return [{
+      action: ACTIONS.CONTACTAR_HOY,
+      approach: APPROACHES.DIRECTO,
+      channel: metrics.canalPreferido,
+      reasoning: `Cliente VIP cerrado hace ${diasSinCompraErp} días. Buen momento para postventa: refacciones, módulos, mantenimiento.`,
+      priority: 80,
+    }];
+  }
+
+  // Regla C: Primera compra reciente + estatus Nuevo → onboarding
+  if (
+    diasDesdePrimeraCompra !== null &&
+    diasDesdePrimeraCompra <= DIAS_PRIMERA_COMPRA_ONBOARDING &&
+    diasDesdePrimeraCompra >= 0 &&
+    client.estatus === 'Nuevo'
+  ) {
+    return [{
+      action: ACTIONS.CONTACTAR_HOY,
+      approach: APPROACHES.INFORMATIVO,
+      channel: metrics.canalPreferido || 'WhatsApp',
+      reasoning: `Primera compra hace ${diasDesdePrimeraCompra} días. Ventana ideal para construir relación y vender complementos.`,
+      priority: 75,
+    }];
+  }
+
+  // === Lógica original (disposición + estatus) ===
+
+  const recs = [];
+
   if (disp === DISPOSITIONS.RECEPTIVO && client.estatus === 'Negociando') {
     recs.push({
       action: ACTIONS.CERRAR,
@@ -81,7 +141,6 @@ function generateRecommendations(client, metrics, disposition, priority) {
     });
   }
 
-  // Secondary: incomplete data
   if (!client.email && !client.empresa) {
     recs.push({
       action: ACTIONS.COMPLETAR_DATOS,
@@ -92,9 +151,7 @@ function generateRecommendations(client, metrics, disposition, priority) {
     });
   }
 
-  // Sort by priority desc
   recs.sort((a, b) => b.priority - a.priority);
-
   return recs;
 }
 

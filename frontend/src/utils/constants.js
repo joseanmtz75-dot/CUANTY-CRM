@@ -108,3 +108,27 @@ export const APPROACH_LABELS = {
   informativo: 'Informativo',
   reactivacion: 'Reactivacion',
 };
+
+export const CLASIFICACION_ERP_LABELS = {
+  ALTO: 'ALTO',
+  MEDIO: 'MEDIO',
+  BAJO: 'BAJO',
+};
+
+export const CLASIFICACION_ERP_COLORS = {
+  ALTO: '#16a34a',
+  MEDIO: '#d97706',
+  BAJO: '#6b7280',
+};
+
+export function diasDesdeFecha(fechaIso) {
+  if (!fechaIso) return null;
+  const d = new Date(fechaIso);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+export function formatMxn(amount) {
+  if (amount == null) return '';
+  return `$${Number(amount).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN`;
+}

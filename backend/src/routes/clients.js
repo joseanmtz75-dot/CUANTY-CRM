@@ -10,7 +10,13 @@ function createClientsRouter(prisma) {
     try {
       const data = { ...req.body };
       if (data.nombre) data.nombre = formatName(data.nombre);
-      if (data.telefono) data.telefono = formatPhone(data.telefono);
+      if (data.telefono) {
+        const normalized = formatPhone(data.telefono);
+        if (!normalized) {
+          return res.status(400).json({ error: 'Teléfono inválido. Debe ser un número mexicano de 10 dígitos.' });
+        }
+        data.telefono = normalized;
+      }
 
       if (!data.proximoContacto) {
         const proximo = calcularProximoContacto(data.estatus || 'Nuevo');
@@ -89,7 +95,18 @@ function createClientsRouter(prisma) {
   // GET /clients
   router.get('/', async (req, res) => {
     try {
-      const { estatus, search, incluirDescartados, vendedor, disposition, clasificacion } = req.query;
+      const {
+        estatus,
+        search,
+        incluirDescartados,
+        vendedor,
+        disposition,
+        clasificacion,
+        clasificacionErp,
+        rfc,
+        diasSinCompraErpMin,
+        diasSinCompraErpMax,
+      } = req.query;
       const where = {};
 
       if (estatus) {
@@ -102,13 +119,37 @@ function createClientsRouter(prisma) {
         where.clasificacion = clasificacion;
       }
 
+      if (clasificacionErp) {
+        where.clasificacionErp = clasificacionErp;
+      }
+
+      if (rfc) {
+        where.rfc = { equals: rfc.trim(), mode: 'insensitive' };
+      }
+
+      const diasMin = diasSinCompraErpMin !== undefined ? parseInt(diasSinCompraErpMin, 10) : null;
+      const diasMax = diasSinCompraErpMax !== undefined ? parseInt(diasSinCompraErpMax, 10) : null;
+      if (Number.isFinite(diasMin) || Number.isFinite(diasMax)) {
+        const now = Date.now();
+        const ultimaCompraErp = {};
+        if (Number.isFinite(diasMin)) {
+          ultimaCompraErp.lte = new Date(now - diasMin * 86400000);
+        }
+        if (Number.isFinite(diasMax)) {
+          ultimaCompraErp.gte = new Date(now - diasMax * 86400000);
+        }
+        where.ultimaCompraErp = ultimaCompraErp;
+      }
+
       if (search) {
         where.OR = [
           { nombre: { contains: search, mode: 'insensitive' } },
           { telefono: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
           { empresa: { contains: search, mode: 'insensitive' } },
+          { rfc: { contains: search, mode: 'insensitive' } },
           { productosFrecuentes: { contains: search, mode: 'insensitive' } },
+          { productosFrecuentesErp: { contains: search, mode: 'insensitive' } },
         ];
       }
 
@@ -190,7 +231,13 @@ function createClientsRouter(prisma) {
     try {
       const data = { ...req.body };
       if (data.nombre) data.nombre = formatName(data.nombre);
-      if (data.telefono) data.telefono = formatPhone(data.telefono);
+      if (data.telefono) {
+        const normalized = formatPhone(data.telefono);
+        if (!normalized) {
+          return res.status(400).json({ error: 'Teléfono inválido. Debe ser un número mexicano de 10 dígitos.' });
+        }
+        data.telefono = normalized;
+      }
 
       if (data.estatus) {
         const current = await prisma.client.findUnique({ where: { id: parseInt(req.params.id) } });

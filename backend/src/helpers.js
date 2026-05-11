@@ -16,15 +16,15 @@ function formatName(name) {
 }
 
 function formatPhone(phone) {
-  if (!phone) return '';
+  if (!phone) return null;
   let digits = String(phone).replace(/\D/g, '');
-  if (!digits) return '';
+  if (!digits) return null;
   if (digits.length === 13 && digits.startsWith('521')) digits = digits.substring(3);
   else if (digits.length === 12 && digits.startsWith('52')) digits = digits.substring(2);
   if (digits.length === 10) {
     return `+52 ${digits.substring(0, 2)} ${digits.substring(2, 6)} ${digits.substring(6)}`;
   }
-  return digits;
+  return null;
 }
 
 function enrichClient(client) {
@@ -35,7 +35,8 @@ function enrichClient(client) {
   if (client.proximoContacto && new Date(client.proximoContacto) < new Date()) {
     diasVencido = diasDesde(client.proximoContacto);
   }
-  return { ...client, temperatura, sugerencias, diasSinContacto, diasVencido };
+  const diasSinCompraErp = client.ultimaCompraErp ? diasDesde(client.ultimaCompraErp) : null;
+  return { ...client, temperatura, sugerencias, diasSinContacto, diasVencido, diasSinCompraErp };
 }
 
 module.exports = { formatName, formatPhone, enrichClient };

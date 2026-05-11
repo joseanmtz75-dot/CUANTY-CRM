@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ROLES, computeTemperatura } from '../utils/constants';
+import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ROLES, CLASIFICACION_ERP_COLORS, computeTemperatura } from '../utils/constants';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -89,10 +89,19 @@ function ClientRow({ client, onEdit, onDelete, onHistory, onIntelligence }) {
           {client.clasificacion && (
             <Badge
               className="text-white text-[10px]"
-              style={{ backgroundColor: client.clasificacion === 'ALTO' ? '#16a34a' : client.clasificacion === 'MEDIO' ? '#d97706' : '#6b7280' }}
+              style={{ backgroundColor: CLASIFICACION_ERP_COLORS[client.clasificacion] || '#6b7280' }}
               title={`Clasificacion PDF: ${client.clasificacion}`}
             >
               {client.clasificacion}
+            </Badge>
+          )}
+          {client.clasificacionErp && (
+            <Badge
+              className="text-white text-[10px]"
+              style={{ backgroundColor: CLASIFICACION_ERP_COLORS[client.clasificacionErp] || '#6b7280' }}
+              title={`Clasificacion ERP (12m): ${client.clasificacionErp}`}
+            >
+              ERP·{client.clasificacionErp}
             </Badge>
           )}
           {client.metrics?.priorityScore != null && (

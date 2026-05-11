@@ -12,6 +12,7 @@ model Client {
   telefono         String             @unique
   email            String?
   empresa          String?
+  rfc              String?
   estatus          String             @default("Nuevo")
   origen           String?
   rol              String   @default("compras")
@@ -26,11 +27,18 @@ model Client {
   productosFrecuentes  String?
   totalComprasPdf      Float?
   totalDocumentosPdf   Int?
+  totalComprasErp        Float?
+  ultimaCompraErp        DateTime?
+  primeraCompraErp       DateTime?
+  productosFrecuentesErp String?
+  clasificacionErp       String?
   createdAt        DateTime           @default(now())
   interactions     Interaction[]
   metrics          ClientMetrics?
   statusChanges    StatusChange[]
   recommendations  RecommendationLog[]
+
+  @@index([clasificacionErp])
 }
 
 model Interaction {

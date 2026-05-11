@@ -162,7 +162,7 @@ export default function ClientTable({ initialFilter, onClearFilter }) {
           <input
             className="w-full h-9 pl-9 pr-3 rounded-lg border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             type="text"
-            placeholder="Buscar por nombre, telefono, email o empresa..."
+            placeholder="Buscar por nombre, telefono, email, empresa, RFC o productos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

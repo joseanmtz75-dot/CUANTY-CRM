@@ -6,6 +6,8 @@ import {
   DISPOSITION_COLORS,
   ACTION_LABELS,
   APPROACH_LABELS,
+  CLASIFICACION_ERP_COLORS,
+  diasDesdeFecha,
 } from '../utils/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ const FACTOR_COLORS = {
   momentum: '#faad14',
   valorEtapa: '#722ed1',
   frescura: '#1890ff',
+  valorEconomico: '#16a34a',
 };
 
 const FACTOR_LABELS = {
@@ -27,6 +30,7 @@ const FACTOR_LABELS = {
   momentum: 'Momentum',
   valorEtapa: 'Valor etapa',
   frescura: 'Frescura',
+  valorEconomico: 'Valor económico',
 };
 
 export default function ClientIntelligenceModal({ client, onClose }) {
@@ -92,6 +96,25 @@ export default function ClientIntelligenceModal({ client, onClose }) {
             </div>
 
             <Separator />
+
+            {/* ERP signal */}
+            {client.ultimaCompraErp && (() => {
+              const dias = diasDesdeFecha(client.ultimaCompraErp);
+              const color = dias > 365 ? 'text-red-600' : dias > 180 ? 'text-amber-600' : 'text-muted-foreground';
+              return (
+                <div className="flex items-center gap-2 -mt-1">
+                  {client.clasificacionErp && (
+                    <Badge
+                      className="text-white text-xs"
+                      style={{ backgroundColor: CLASIFICACION_ERP_COLORS[client.clasificacionErp] || '#6b7280' }}
+                    >
+                      ERP·{client.clasificacionErp}
+                    </Badge>
+                  )}
+                  <span className={`text-sm ${color}`}>Última compra real: hace {dias} días</span>
+                </div>
+              );
+            })()}
 
             {/* Priority */}
             <div>

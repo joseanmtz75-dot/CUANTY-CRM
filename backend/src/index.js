@@ -14,6 +14,7 @@ const { createMiDiaRouter } = require('./routes/mi-dia');
 const { createAlertsRouter } = require('./routes/alerts');
 const { createRendimientoRouter } = require('./routes/rendimiento');
 const { createChatRouter } = require('./routes/chat');
+const { cronSyncErpHandler } = require('./jobs/sync-erp');
 
 // Singleton PrismaClient for serverless environments
 if (!globalThis.__prisma) {
@@ -47,6 +48,8 @@ app.use('/dashboard', createRendimientoRouter(prisma));
 app.use('/alerts', createAlertsRouter(prisma));
 // Chat (DeepSeek AI)
 app.use('/chat', createChatRouter(prisma));
+// Cron endpoints (mirror of api/cron/* Vercel functions, exposed for local testing)
+app.post('/api/cron/sync-erp', cronSyncErpHandler);
 
 // Only listen when running standalone (not in Vercel)
 if (!process.env.VERCEL) {
