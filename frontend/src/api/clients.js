@@ -40,8 +40,11 @@ export const deleteClient = (id) =>
 export const bulkImportClients = (clients) =>
   API.post('/clients/bulk', { clients }).then(res => res.data);
 
-export const getDailyPlan = (limit = 15) =>
-  API.get('/clients/daily-plan', { params: { limit } }).then(res => res.data);
+export const getDailyPlan = (limit = 15, vendedor = null) => {
+  const params = { limit };
+  if (vendedor) params.vendedor = vendedor;
+  return API.get('/clients/daily-plan', { params }).then(res => res.data);
+};
 
 export const getTodayFollowUps = (opts = {}) => {
   // Backward compat: si recibimos string, asumimos vendedor.

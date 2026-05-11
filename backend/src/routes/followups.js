@@ -125,12 +125,24 @@ function createFollowupsRouter(prisma) {
       const endOfDay = new Date(now);
       endOfDay.setHours(23, 59, 59, 999);
 
+      const vendedor = req.query.vendedor;
+      const where = {
+        proximoContacto: { lte: endOfDay },
+        estatus: { notIn: ESTATUS_SIN_SEGUIMIENTO },
+        rol: 'compras',
+      };
+      if (vendedor) {
+        // Mi lineup = mis clientes + clientes sin asignar.
+        // Excluye clientes asignados a otros vendedores.
+        where.OR = [
+          { vendedor: vendedor },
+          { vendedor: null },
+          { vendedor: '' },
+        ];
+      }
+
       const clients = await prisma.client.findMany({
-        where: {
-          proximoContacto: { lte: endOfDay },
-          estatus: { notIn: ESTATUS_SIN_SEGUIMIENTO },
-          rol: 'compras',
-        },
+        where,
         include: {
           interactions: { orderBy: { createdAt: 'desc' } },
           metrics: true,
