@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ROLES, CLASIFICACION_ERP_COLORS, computeTemperatura } from '../utils/constants';
+import { toWhatsAppUrl } from '../utils/formatters';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,14 +28,6 @@ function getRolBadgeLabel(client) {
   }
   const found = ROLES.find(r => r.value === client.rol);
   return found ? found.label.substring(0, 3).toUpperCase() : client.rol.substring(0, 3).toUpperCase();
-}
-
-function toWhatsAppUrl(telefono) {
-  if (!telefono) return null;
-  let digits = telefono.replace(/[^\d+]/g, '');
-  if (digits.startsWith('+')) digits = digits.slice(1);
-  if (digits.length === 10) digits = '52' + digits;
-  return `https://wa.me/${digits}`;
 }
 
 function ClientRow({ client, onEdit, onDelete, onHistory, onIntelligence }) {

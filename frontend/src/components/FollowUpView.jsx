@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTodayFollowUps } from '../api/clients';
-import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ACTION_LABELS, APPROACH_LABELS } from '../utils/constants';
+import { STATUS_COLORS, TEMP_COLORS, TEMP_LABELS, DISPOSITION_LABELS, DISPOSITION_COLORS, ACTION_LABELS, APPROACH_LABELS, CLASIFICACION_ERP_COLORS, diasDesdeFecha } from '../utils/constants';
+import { toWhatsAppUrl } from '../utils/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { X } from 'lucide-react';
+import { X, MessageCircle } from 'lucide-react';
 import QuickLogModal from './QuickLogModal';
 import ClientIntelligenceModal from './ClientIntelligenceModal';
 
@@ -153,6 +154,15 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
                       <Badge className="text-white text-[10px]" style={{ backgroundColor: STATUS_COLORS[client.estatus] || '#8c8c8c' }}>
                         {client.estatus}
                       </Badge>
+                      {client.clasificacionErp && (
+                        <Badge
+                          className="text-white text-[10px]"
+                          style={{ backgroundColor: CLASIFICACION_ERP_COLORS[client.clasificacionErp] || '#6b7280' }}
+                          title={`Clasificacion ERP (12m): ${client.clasificacionErp}`}
+                        >
+                          ERP·{client.clasificacionErp}
+                        </Badge>
+                      )}
                       {client.diasVencido > 0 && (
                         <Badge variant="destructive" className="text-[10px]">VENCIDO {client.diasVencido}d</Badge>
                       )}
@@ -167,6 +177,15 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
                       <span className="text-xs text-muted-foreground">
                         {client.diasSinContacto === 0 ? 'Hoy' : `Hace ${client.diasSinContacto}d`}
                       </span>
+                      {client.ultimaCompraErp && (() => {
+                        const dias = diasDesdeFecha(client.ultimaCompraErp);
+                        const color = dias > 365 ? 'text-red-600' : dias > 180 ? 'text-amber-600' : 'text-muted-foreground';
+                        return (
+                          <span className={`text-xs ${color}`} title={`Última compra ERP: ${new Date(client.ultimaCompraErp).toLocaleDateString('es-MX')}`}>
+                            · compra hace {dias}d
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                   <span className="text-sm text-muted-foreground shrink-0">{client.telefono}</span>
@@ -222,7 +241,20 @@ export default function FollowUpView({ initialFilter, onClearFilter }) {
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-2 pt-1 flex-wrap">
+                  {toWhatsAppUrl(client.telefono) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-green-600 text-green-700 hover:bg-green-50"
+                      asChild
+                    >
+                      <a href={toWhatsAppUrl(client.telefono)} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="h-3 w-3 mr-1" />
+                        WhatsApp
+                      </a>
+                    </Button>
+                  )}
                   <Button size="sm" className="h-7 text-xs" onClick={() => openQuickLog(client, 'llamada')}>Llame</Button>
                   <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={() => openQuickLog(client, 'mensaje')}>Mensaje</Button>
                   <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={() => openQuickLog(client, 'nota')}>Nota</Button>

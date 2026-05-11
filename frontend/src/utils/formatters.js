@@ -22,3 +22,12 @@ export function formatPhone(phone) {
   }
   return digits;
 }
+
+export function toWhatsAppUrl(telefono) {
+  if (!telefono) return null;
+  let digits = String(telefono).replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) digits = digits.slice(1);
+  if (digits.length === 10) digits = '52' + digits;
+  if (!digits) return null;
+  return `https://wa.me/${digits}`;
+}

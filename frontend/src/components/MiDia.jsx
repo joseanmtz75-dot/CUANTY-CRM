@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getMiDia } from '../api/clients';
-import { STATUS_COLORS } from '../utils/constants';
+import { STATUS_COLORS, CLASIFICACION_ERP_COLORS, diasDesdeFecha } from '../utils/constants';
+import { toWhatsAppUrl } from '../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MessageCircle } from 'lucide-react';
 
 function MiDia({ onNavigate }) {
   const [data, setData] = useState(null);
@@ -68,30 +71,65 @@ function MiDia({ onNavigate }) {
               <p className="text-sm text-muted-foreground py-4 text-center">No hay tareas pendientes para hoy</p>
             ) : (
               <div className="space-y-2">
-                {tareasDeHoy.map((c) => (
-                  <div
-                    key={c.id}
-                    className="p-3 rounded-lg border-l-[3px] border-l-blue-500 bg-muted/30 cursor-pointer hover:bg-muted/60 transition-colors"
-                    onClick={() => onNavigate('seguimiento')}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-[#001529] text-white hover:bg-[#001529] text-xs font-bold px-1.5">
-                        {c.priorityScore}
-                      </Badge>
-                      <span className="font-medium text-sm">{c.nombre}</span>
-                      <Badge
-                        className="text-white text-[10px] ml-auto"
-                        style={{ backgroundColor: STATUS_COLORS[c.estatus] || '#8c8c8c' }}
-                      >
-                        {c.estatus}
-                      </Badge>
+                {tareasDeHoy.map((c) => {
+                  const waUrl = toWhatsAppUrl(c.telefono);
+                  const diasCompra = c.ultimaCompraErp ? diasDesdeFecha(c.ultimaCompraErp) : null;
+                  const diasCompraColor = diasCompra == null ? '' : diasCompra > 365 ? 'text-red-600' : diasCompra > 180 ? 'text-amber-600' : 'text-muted-foreground';
+                  return (
+                    <div
+                      key={c.id}
+                      className="p-3 rounded-lg border-l-[3px] border-l-blue-500 bg-muted/30 cursor-pointer hover:bg-muted/60 transition-colors"
+                      onClick={() => onNavigate('seguimiento')}
+                    >
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className="bg-[#001529] text-white hover:bg-[#001529] text-xs font-bold px-1.5">
+                          {c.priorityScore}
+                        </Badge>
+                        <span className="font-medium text-sm">{c.nombre}</span>
+                        {c.clasificacionErp && (
+                          <Badge
+                            className="text-white text-[10px]"
+                            style={{ backgroundColor: CLASIFICACION_ERP_COLORS[c.clasificacionErp] || '#6b7280' }}
+                            title={`Clasificacion ERP (12m): ${c.clasificacionErp}`}
+                          >
+                            ERP·{c.clasificacionErp}
+                          </Badge>
+                        )}
+                        <Badge
+                          className="text-white text-[10px] ml-auto"
+                          style={{ backgroundColor: STATUS_COLORS[c.estatus] || '#8c8c8c' }}
+                        >
+                          {c.estatus}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {c.empresa && <span className="text-xs text-muted-foreground">{c.empresa}</span>}
+                        {diasCompra != null && (
+                          <span className={`text-xs ${diasCompraColor}`}>· compra hace {diasCompra}d</span>
+                        )}
+                      </div>
+                      {c.recommendedAction && (
+                        <span className="text-xs text-blue-600 font-medium mt-1 block">{c.recommendedAction}</span>
+                      )}
+                      {waUrl && (
+                        <div className="mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 text-[11px] border-green-600 text-green-700 hover:bg-green-50"
+                            asChild
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <a href={waUrl} target="_blank" rel="noopener noreferrer">
+                              <MessageCircle className="h-3 w-3 mr-1" />
+                              WhatsApp
+                            </a>
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    {c.empresa && <span className="text-xs text-muted-foreground mt-1 block">{c.empresa}</span>}
-                    {c.recommendedAction && (
-                      <span className="text-xs text-blue-600 font-medium mt-1 block">{c.recommendedAction}</span>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
